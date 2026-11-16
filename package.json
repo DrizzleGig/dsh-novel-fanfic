@@ -1,0 +1,73 @@
+{
+  "name": "dsh-novel-fanfic",
+  "version": "0.1.0",
+  "description": "原著有据可查，本作设定由你决定。导入原著得到可核 canon，声明你故意的二创改动；写的时候本作优先于原著，写完检查器只指「跟哪条设定冲突」，不逼你改回原著。默认关闭，不写正文。",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./icon": "./icon.svg",
+    "./lib/*": "./lib/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "eval": "node scripts/fanfic-eval.mjs",
+    "eval:verify": "node scripts/fanfic-eval.mjs verify",
+    "eval:check": "node scripts/fanfic-eval.mjs check",
+    "eval:lookup": "node scripts/fanfic-eval.mjs lookup --all",
+    "eval:smoke": "node scripts/fanfic-eval.mjs smoke",
+    "canon": "node scripts/fanfic-canon.mjs",
+    "perf": "node scripts/fanfic-perf.mjs"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "lib",
+    "eval",
+    "scripts",
+    "fixtures",
+    "locale",
+    "cordis.patch.yml",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "novel",
+    "fanfic",
+    "canon",
+    "fic-canon",
+    "au",
+    "evaluation"
+  ],
+  "license": "MIT",
+  "author": "DrizzleGig",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/DrizzleGig/dsh-novel-fanfic.git"
+  },
+  "homepage": "https://github.com/DrizzleGig/dsh-novel-fanfic",
+  "bugs": {
+    "url": "https://github.com/DrizzleGig/dsh-novel-fanfic/issues"
+  }
+}

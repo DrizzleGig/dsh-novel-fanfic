@@ -1,0 +1,145 @@
+[
+  {
+    "kind": "entity",
+    "chapter": "ch005",
+    "offset": 45,
+    "quote": "沈砚坐在门槛上",
+    "payload": {
+      "name": "沈砚",
+      "aliases": [],
+      "role": "主角",
+      "summary": "在旧船屋等冬至夜一窥来人的少年，手里转着铜哨，灯影下的眼睛是灰蓝色的。"
+    },
+    "confidence": 0.95
+  },
+  {
+    "kind": "entity",
+    "chapter": "ch005",
+    "offset": 83,
+    "quote": "裴照在门口站了一会儿",
+    "payload": {
+      "name": "裴照",
+      "aliases": [],
+      "role": "配角",
+      "summary": "冒雾夜来旧船屋的同伴，暗中查访出勤簿半个月，答应冬至夜在望潮台为沈砚望风。"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "entity",
+    "chapter": "ch005",
+    "offset": 66,
+    "quote": "苏鹤都告诉我了",
+    "payload": {
+      "name": "苏鹤",
+      "aliases": [],
+      "role": "配角",
+      "summary": "本章未出场，只被提到已把内情先行告知沈砚。"
+    },
+    "confidence": 0.6
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch005",
+    "offset": 275,
+    "quote": "沈砚的眼睛是灰蓝色的",
+    "payload": { "subject": "沈砚", "predicate": "eye_color", "object": "灰蓝色" },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch005",
+    "offset": 53,
+    "quote": "铜哨在手里转来转去",
+    "payload": { "subject": "沈砚", "predicate": "possession", "object": "铜哨" },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch005",
+    "offset": 94,
+    "quote": "把蓑衣解下来搭在门框上",
+    "payload": { "subject": "裴照", "predicate": "possession", "object": "蓑衣" },
+    "confidence": 0.85
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch005",
+    "offset": 376,
+    "quote": "这是巡雾队三年前的记录。",
+    "payload": { "subject": "裴照", "predicate": "possession", "object": "巡雾队三年前的记录" },
+    "confidence": 0.85
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch005",
+    "offset": 143,
+    "quote": "你父亲当年顶的那桩事，牵到巡雾队上头",
+    "payload": { "subject": "沈砚", "predicate": "relationship", "object": "父亲（当年顶下一桩事，牵涉巡雾队）" },
+    "confidence": 0.85
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch005",
+    "offset": 130,
+    "quote": "出勤簿的事，我查了半个月",
+    "payload": { "subject": "裴照", "predicate": "role", "object": "暗中查访出勤簿半个月" },
+    "confidence": 0.8
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch005",
+    "offset": 1,
+    "quote": "冬至前的第六天，裴照又来了旧船屋。",
+    "payload": { "subject": "沈砚", "predicate": "residence", "object": "旧船屋" },
+    "confidence": 0.55
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch005",
+    "offset": 66,
+    "quote": "苏鹤都告诉我了",
+    "payload": { "subject": "沈砚", "predicate": "relationship", "object": "苏鹤（已把内情告知他）" },
+    "confidence": 0.6
+  },
+  {
+    "kind": "world_rule",
+    "chapter": "ch005",
+    "offset": 589,
+    "quote": "潮声钟一响，谁都动不了",
+    "payload": { "text": "潮声钟一响，谁都动不了（想不惊动对方地看一眼，只能趁这一刻）。" },
+    "confidence": 0.8
+  },
+  {
+    "kind": "address",
+    "chapter": "ch005",
+    "offset": 66,
+    "quote": "苏鹤都告诉我了",
+    "payload": {
+      "from": "沈砚",
+      "to": "苏鹤",
+      "form": "苏鹤",
+      "publicForm": "苏鹤",
+      "privateForm": "苏鹤",
+      "fromChapter": "ch005",
+      "taboo": []
+    },
+    "confidence": 0.7
+  },
+  {
+    "kind": "address",
+    "chapter": "ch005",
+    "offset": 162,
+    "quote": "我要是早说，你早就冲进雾里去了",
+    "payload": {
+      "from": "裴照",
+      "to": "沈砚",
+      "form": "你",
+      "publicForm": "你",
+      "privateForm": "你",
+      "fromChapter": "ch005",
+      "taboo": []
+    },
+    "confidence": 0.5
+  }
+]

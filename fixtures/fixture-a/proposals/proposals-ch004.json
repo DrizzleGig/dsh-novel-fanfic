@@ -1,0 +1,147 @@
+[
+  {
+    "kind": "entity",
+    "chapter": "ch004",
+    "offset": 32,
+    "quote": "沈砚跟着她进了档案房。",
+    "payload": {
+      "name": "沈砚",
+      "aliases": [],
+      "role": "主角",
+      "summary": "来档案房打听父亲下落的年轻人，胸口贴身带着一枚铜哨。"
+    },
+    "confidence": 0.92
+  },
+  {
+    "kind": "entity",
+    "chapter": "ch004",
+    "offset": 0,
+    "quote": "门开的时候，苏鹤的脸色在灯下白了一下。",
+    "payload": {
+      "name": "苏鹤",
+      "aliases": [
+        "苏姑娘"
+      ],
+      "role": "配角",
+      "summary": "档案房里的女子，替沈砚父亲年年取走冬至送来的灯油并记账。"
+    },
+    "confidence": 0.92
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch004",
+    "offset": 282,
+    "quote": "桶放在塔基的暗格，我去取。",
+    "payload": {
+      "subject": "苏鹤",
+      "predicate": "role",
+      "object": "档案房掌簿者，负责取塔基暗格里的灯油"
+    },
+    "confidence": 0.85
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch004",
+    "offset": 494,
+    "quote": "铜哨就贴在胸口，凉的。",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "possession",
+      "object": "铜哨"
+    },
+    "confidence": 0.8
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch004",
+    "offset": 165,
+    "quote": "你父亲还活着。",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "relationship",
+      "object": "父亲仍在世，三年前替人顶事从港里消失"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch004",
+    "offset": 222,
+    "quote": "三年前他是替人顶了事，才从港里消失的",
+    "payload": {
+      "subject": "沈砚父亲",
+      "predicate": "role",
+      "object": "替人顶了事的人，三年前从港里消失"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch004",
+    "offset": 264,
+    "quote": "没有灯的小船",
+    "payload": {
+      "subject": "沈砚父亲",
+      "predicate": "possession",
+      "object": "一条没有灯的小船"
+    },
+    "confidence": 0.8
+  },
+  {
+    "kind": "world_rule",
+    "chapter": "ch004",
+    "offset": 467,
+    "quote": "你一喊他，他就会被雾带走。这是规矩。",
+    "payload": {
+      "text": "顶了事的人只要还在雾里走，被亲人呼唤就会被雾带走，不能算“回来”。"
+    },
+    "confidence": 0.88
+  },
+  {
+    "kind": "world_rule",
+    "chapter": "ch004",
+    "offset": 245,
+    "quote": "每年冬至，雾最厚的那一晚",
+    "payload": {
+      "text": "每年冬至雾最厚的一夜，有人摇无灯小船到长明塔下送一桶灯油，放在塔基暗格，账面记为“旧存”。"
+    },
+    "confidence": 0.8
+  },
+  {
+    "kind": "secret",
+    "chapter": "ch004",
+    "offset": 195,
+    "quote": "他没有死。",
+    "payload": {
+      "what": "沈砚的父亲没有死：三年前替人顶事从港里消失，每年冬至雾最厚的一夜摇无灯小船到长明塔下送灯油，油由苏鹤取走并记作“旧存”。",
+      "publicAtChapter": "ch004",
+      "knownBy": [
+        {
+          "who": "苏鹤",
+          "fromChapter": "ch004"
+        },
+        {
+          "who": "沈砚",
+          "fromChapter": "ch004"
+        }
+      ]
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "address",
+    "chapter": "ch004",
+    "offset": 90,
+    "quote": "苏姑娘，我想问问我父亲。",
+    "payload": {
+      "from": "沈砚",
+      "to": "苏鹤",
+      "form": "苏姑娘",
+      "publicForm": "苏姑娘",
+      "privateForm": "",
+      "fromChapter": "ch004",
+      "taboo": []
+    },
+    "confidence": 0.85
+  }
+]

@@ -1,0 +1,11 @@
+# 发布用的默认配置：不写死任何本机路径。
+# - root：用户工作目录（.dsh-novel-fanfic/ 在它下面）。不填就用进程 cwd，
+#   插件会从 cwd 向上找夹具；装成 bundle 后也可以用插件管理器的配置页改。
+# - project：默认项目名。面板里切项目会写进 prefs.json，之后以那个为准。
+# - fixture：夹具目录（只有 source: 'fixture' 的评测/工具会用到），相对 root；
+#   找不到时回落到包内 fixtures/fixture-a。
+- insert:
+    - id: novel-fanfic
+      name: 'dsh-novel-fanfic'
+      config:
+        fixture: 'dsh-novel-fanfic/fixtures/fixture-a'

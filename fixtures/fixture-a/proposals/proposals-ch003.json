@@ -1,0 +1,211 @@
+[
+    {
+        "confidence":  0.95,
+        "quote":  "苏鹤把最后一批出勤簿摞上架子",
+        "payload":  {
+                        "name":  "苏鹤",
+                        "aliases":  [
+                                        "苏姑娘"
+                                    ],
+                        "role":  "配角",
+                        "summary":  "长明塔档案房的记录员，沈九的旧识，替他隐瞒冬至送灯油的事三年"
+                    },
+        "kind":  "entity",
+        "chapter":  "ch003",
+        "offset":  38
+    },
+    {
+        "confidence":  0.9,
+        "quote":  "沈九没有死",
+        "payload":  {
+                        "name":  "沈九",
+                        "aliases":  [
+
+                                    ],
+                        "role":  "配角",
+                        "summary":  "三年前替人顶事在港里“失踪”，每年冬至夜摇无灯小船送一桶灯油到长明塔下"
+                    },
+        "kind":  "entity",
+        "chapter":  "ch003",
+        "offset":  186
+    },
+    {
+        "confidence":  0.9,
+        "quote":  "是沈砚的声音",
+        "payload":  {
+                        "name":  "沈砚",
+                        "aliases":  [
+
+                                    ],
+                        "role":  "配角",
+                        "summary":  "多次来档案房查问沈九线索的人，性子直"
+                    },
+        "kind":  "entity",
+        "chapter":  "ch003",
+        "offset":  456
+    },
+    {
+        "confidence":  0.85,
+        "quote":  "裴照昨天来问出勤簿",
+        "payload":  {
+                        "name":  "裴照",
+                        "aliases":  [
+
+                                    ],
+                        "role":  "配角",
+                        "summary":  "昨天到档案房查问出勤簿的人"
+                    },
+        "kind":  "entity",
+        "chapter":  "ch003",
+        "offset":  350
+    },
+    {
+        "confidence":  0.95,
+        "quote":  "她是长明塔档案房的记录员",
+        "payload":  {
+                        "subject":  "苏鹤",
+                        "predicate":  "role",
+                        "object":  "长明塔档案房的记录员"
+                    },
+        "kind":  "fact",
+        "chapter":  "ch003",
+        "offset":  61
+    },
+    {
+        "confidence":  0.9,
+        "quote":  "也是沈九的旧识",
+        "payload":  {
+                        "subject":  "苏鹤",
+                        "predicate":  "relationship",
+                        "object":  "沈九的旧识"
+                    },
+        "kind":  "fact",
+        "chapter":  "ch003",
+        "offset":  74
+    },
+    {
+        "confidence":  0.85,
+        "quote":  "她跟着沈九在望潮台上记潮",
+        "payload":  {
+                        "subject":  "苏鹤",
+                        "predicate":  "relationship",
+                        "object":  "多年前随沈九在望潮台记潮，记了整整两年"
+                    },
+        "kind":  "fact",
+        "chapter":  "ch003",
+        "offset":  88
+    },
+    {
+        "confidence":  0.7,
+        "quote":  "沈砚每次来问",
+        "payload":  {
+                        "subject":  "沈砚",
+                        "predicate":  "relationship",
+                        "object":  "常来向苏鹤查问沈九的线索"
+                    },
+        "kind":  "fact",
+        "chapter":  "ch003",
+        "offset":  315
+    },
+    {
+        "confidence":  0.7,
+        "quote":  "摇着一只没有灯的小船",
+        "payload":  {
+                        "subject":  "沈九",
+                        "predicate":  "possession",
+                        "object":  "一只没有灯的小船"
+                    },
+        "kind":  "fact",
+        "chapter":  "ch003",
+        "offset":  238
+    },
+    {
+        "confidence":  0.65,
+        "quote":  "是沈九自己的笔迹",
+        "payload":  {
+                        "subject":  "沈九",
+                        "predicate":  "possession",
+                        "object":  "出勤簿末页记着“冬至，雾里，一桶”的亲笔字"
+                    },
+        "kind":  "fact",
+        "chapter":  "ch003",
+        "offset":  146
+    },
+    {
+        "confidence":  0.85,
+        "quote":  "雾里的规矩，找，就是送死",
+        "payload":  {
+                        "text":  "雾里的规矩：下雾时去找人等于送死"
+                    },
+        "kind":  "world_rule",
+        "chapter":  "ch003",
+        "offset":  398
+    },
+    {
+        "confidence":  0.65,
+        "quote":  "每年冬至，雾最厚的那一晚",
+        "payload":  {
+                        "text":  "每年冬至的夜里雾最厚"
+                    },
+        "kind":  "world_rule",
+        "chapter":  "ch003",
+        "offset":  222
+    },
+    {
+        "confidence":  0.9,
+        "quote":  "这件事，她替他瞒了三年",
+        "payload":  {
+                        "what":  "沈九三年前替人顶了桩事在港里“失踪”，其实没死；每年冬至雾最厚那晚摇无灯小船到长明塔下，把一桶灯油放在塔基暗格，苏鹤次日取走并在账上记作“旧存”，已替他瞒了三年",
+                        "publicAtChapter":  "ch003",
+                        "knownBy":  [
+                                        {
+                                            "who":  "苏鹤",
+                                            "fromChapter":  "ch003"
+                                        },
+                                        {
+                                            "who":  "沈九",
+                                            "fromChapter":  "ch003"
+                                        }
+                                    ]
+                    },
+        "kind":  "secret",
+        "chapter":  "ch003",
+        "offset":  289
+    },
+    {
+        "confidence":  0.85,
+        "quote":  "苏姑娘",
+        "payload":  {
+                        "from":  "沈砚",
+                        "to":  "苏鹤",
+                        "form":  "苏姑娘",
+                        "publicForm":  "苏姑娘",
+                        "privateForm":  "",
+                        "fromChapter":  "ch003",
+                        "taboo":  [
+
+                                  ]
+                    },
+        "kind":  "address",
+        "chapter":  "ch003",
+        "offset":  451
+    },
+    {
+        "confidence":  0.6,
+        "quote":  "沈砚那孩子性子直",
+        "payload":  {
+                        "from":  "苏鹤",
+                        "to":  "沈砚",
+                        "form":  "沈砚那孩子",
+                        "publicForm":  "沈砚",
+                        "privateForm":  "沈砚那孩子",
+                        "fromChapter":  "ch003",
+                        "taboo":  [
+
+                                  ]
+                    },
+        "kind":  "address",
+        "chapter":  "ch003",
+        "offset":  381
+    }
+]

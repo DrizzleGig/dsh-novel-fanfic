@@ -1,0 +1,182 @@
+[
+  {
+    "kind": "entity",
+    "chapter": "ch002",
+    "offset": 30,
+    "quote": "沈砚蹲在长明塔底座下修灯绳",
+    "payload": {
+      "name": "沈砚",
+      "aliases": ["阿砚"],
+      "role": "主角",
+      "summary": "住在长明塔塔脚旧船屋、会“听雾”的年轻人，正为塔修灯绳。"
+    },
+    "confidence": 0.95
+  },
+  {
+    "kind": "entity",
+    "chapter": "ch002",
+    "offset": 184,
+    "quote": "看见裴照提着个油纸包走过来",
+    "payload": {
+      "name": "裴照",
+      "aliases": [],
+      "role": "配角",
+      "summary": "巡雾队队员，冒雾来塔下找沈砚，带来其父出勤簿的疑点。"
+    },
+    "confidence": 0.95
+  },
+  {
+    "kind": "entity",
+    "chapter": "ch002",
+    "offset": 305,
+    "quote": "苏鹤说，最后一页对不上",
+    "payload": {
+      "name": "苏鹤",
+      "aliases": ["苏姑娘"],
+      "role": "配角",
+      "summary": "档案房的人，指出沈砚父亲出勤簿最后一页对不上。"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch002",
+    "offset": 74,
+    "quote": "他伸手按了按右肩——阴雨天，那条落下旧伤的胳膊抬不过头顶",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "injury",
+      "object": "右肩旧伤，阴雨天胳膊抬不过头顶，绕灯绳只能换左手"
+    },
+    "confidence": 0.95
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch002",
+    "offset": 44,
+    "quote": "旧船屋就在塔脚，门板漏风，他已经住了三年",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "residence",
+      "object": "长明塔塔脚的旧船屋，已住三年"
+    },
+    "confidence": 0.95
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch002",
+    "offset": 445,
+    "quote": "沈砚的眼睛是浅褐色的，像含着一层旧茶",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "eye_color",
+      "object": "浅褐色"
+    },
+    "confidence": 0.95
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch002",
+    "offset": 117,
+    "quote": "他有一样本事，港里人叫“听雾”",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "possession",
+      "object": "会“听雾”：闭眼凭回声辨出船的位置和远近"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch002",
+    "offset": 152,
+    "quote": "这本事是他父亲教的",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "relationship",
+      "object": "父亲；听雾的本事是父亲教的"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch002",
+    "offset": 198,
+    "quote": "巡雾队的制服外头罩了件旧蓑衣",
+    "payload": {
+      "subject": "裴照",
+      "predicate": "role",
+      "object": "巡雾队队员"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch002",
+    "offset": 748,
+    "quote": "苏姑娘爱喝这个，你带过去",
+    "payload": {
+      "subject": "裴照",
+      "predicate": "possession",
+      "object": "一包桂花糖，托沈砚带给苏鹤"
+    },
+    "confidence": 0.85
+  },
+  {
+    "kind": "world_rule",
+    "chapter": "ch002",
+    "offset": 12,
+    "quote": "涨雾日封港，码头上一条船也没有",
+    "payload": {
+      "text": "涨雾日封港，码头无船进出"
+    },
+    "confidence": 0.85
+  },
+  {
+    "kind": "secret",
+    "chapter": "ch002",
+    "offset": 353,
+    "quote": "簿上写他三年前那个冬天没出过港",
+    "payload": {
+      "what": "沈砚父亲的出勤簿写他三年前那个冬天没出过港，但守夜记录显示那几晚长明塔的灯都亮着，最后一页对不上日子。",
+      "publicAtChapter": null,
+      "knownBy": [
+        { "who": "裴照", "fromChapter": "ch002" },
+        { "who": "苏鹤", "fromChapter": "ch002" }
+      ]
+    },
+    "confidence": 0.85
+  },
+  {
+    "kind": "address",
+    "chapter": "ch002",
+    "offset": 164,
+    "quote": "“阿砚。”",
+    "payload": {
+      "from": "裴照",
+      "to": "沈砚",
+      "form": "阿砚",
+      "publicForm": "沈砚",
+      "privateForm": "阿砚",
+      "fromChapter": "ch002",
+      "taboo": []
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "address",
+    "chapter": "ch002",
+    "offset": 748,
+    "quote": "苏姑娘爱喝这个，你带过去",
+    "payload": {
+      "from": "裴照",
+      "to": "苏鹤",
+      "form": "苏姑娘",
+      "publicForm": "苏鹤",
+      "privateForm": "苏姑娘",
+      "fromChapter": "ch002",
+      "taboo": []
+    },
+    "confidence": 0.8
+  }
+]

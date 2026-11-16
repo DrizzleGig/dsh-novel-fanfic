@@ -1,0 +1,794 @@
+{
+  "fixture": "A",
+  "version": "0.1.0",
+  "title": "雾港",
+  "kind": "synthetic",
+  "sourceFile": "source.md",
+  "synopsis": "雾港的守灯人学徒沈砚，在巡雾队副队长裴照与档案房记录员苏鹤之间，得知三年前失踪的父亲沈九其实还活着。五章正文 + 一章干净对照。",
+  "_notes": [
+    "10 条无冲突事实（fact_01..fact_09 + fact_12 关系事实），另加 1 对互斥的瞳色事实（fact_10 / fact_11）构成 1 处前后矛盾。",
+    "所有 fact.offset 由加载器按 chapter + quote 计算；quote 必须在对应章节中唯一出现。",
+    "场景契约是手写的临时替身：v0.1.0 第 3 步的编译器上线后，由编译器产出同形文件，评测脚本不变。",
+    "AU 规则 = 作者私设的改写规则；夹具场景标签统一为 原著向，出现 AU 规则签名即视为泄漏。"
+  ],
+  "chapters": [
+    {
+      "id": "ch001",
+      "title": "雾港初逢",
+      "heading": "## 第一章 雾港初逢"
+    },
+    {
+      "id": "ch002",
+      "title": "塔下修灯",
+      "heading": "## 第二章 塔下修灯"
+    },
+    {
+      "id": "ch003",
+      "title": "档案房",
+      "heading": "## 第三章 档案房"
+    },
+    {
+      "id": "ch004",
+      "title": "冬至的油",
+      "heading": "## 第四章 冬至的油"
+    },
+    {
+      "id": "ch005",
+      "title": "灯下的眼睛",
+      "heading": "## 第五章 灯下的眼睛"
+    },
+    {
+      "id": "ch006",
+      "title": "巡夜",
+      "heading": "## 第六章 巡夜"
+    }
+  ],
+  "characters": [
+    {
+      "id": "char_shen",
+      "name": "沈砚",
+      "aliases": [
+        "阿砚",
+        "沈先生"
+      ],
+      "tabooForms": [
+        "小砚"
+      ],
+      "role": "主角",
+      "firstChapter": "ch001",
+      "summary": "长明塔守灯人学徒，十七岁；父亲沈九三年前在雾里失踪。",
+      "appearance": {
+        "scarSide": {
+          "value": "左眉",
+          "factId": "fact_02",
+          "conflicted": false
+        },
+        "eyeColor": {
+          "value": null,
+          "factIds": [
+            "fact_10",
+            "fact_11"
+          ],
+          "conflicted": true
+        }
+      }
+    },
+    {
+      "id": "char_pei",
+      "name": "裴照",
+      "aliases": [
+        "裴副队"
+      ],
+      "tabooForms": [],
+      "role": "对手 / 搭档",
+      "firstChapter": "ch001",
+      "summary": "巡雾队副队长，二十四岁；在查沈九当年的出勤簿。",
+      "appearance": {
+        "scarSide": {
+          "value": null,
+          "conflicted": false
+        }
+      }
+    },
+    {
+      "id": "char_su",
+      "name": "苏鹤",
+      "aliases": [
+        "苏姑娘"
+      ],
+      "tabooForms": [],
+      "role": "秘密持有者",
+      "firstChapter": "ch003",
+      "summary": "长明塔档案房记录员，沈九旧识；替沈九瞒了三年。",
+      "appearance": {}
+    }
+  ],
+  "facts": [
+    {
+      "id": "fact_01",
+      "subject": "char_shen",
+      "predicate": "identity",
+      "object": "长明塔守灯人学徒，十七岁，做这活已经三年",
+      "chapter": "ch001",
+      "quote": "他今年十七岁，是长明塔的守灯人学徒，做这活已经三年。",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_02",
+      "subject": "char_shen",
+      "predicate": "scar_side",
+      "object": "左眉骨一道旧疤",
+      "chapter": "ch001",
+      "quote": "沈砚左眉骨上有一道旧疤，是小时候从塔上摔下来磕的",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_03",
+      "subject": "char_shen",
+      "predicate": "injury",
+      "object": "右肩旧伤，阴雨天抬不起重物",
+      "chapter": "ch001",
+      "quote": "右肩的旧伤在冷风里发酸，那伤是三年前落下的，一到阴雨天就抬不起重物",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_04",
+      "subject": "char_shen",
+      "predicate": "item",
+      "object": "母亲留下的铜哨，三短声唤摆渡人",
+      "chapter": "ch001",
+      "quote": "那里挂着一枚铜哨，磨得发亮，是母亲留下的东西",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_05",
+      "subject": "char_shen",
+      "predicate": "family_timeline",
+      "object": "父亲沈九三年前冬天在雾里失踪",
+      "chapter": "ch001",
+      "quote": "三年前的冬天，他父亲沈九在雾里失踪，连尸首都没找着",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_06",
+      "subject": "char_pei",
+      "predicate": "identity",
+      "object": "巡雾队副队长，二十四岁",
+      "chapter": "ch001",
+      "quote": "来人是巡雾队的副队长裴照，二十四岁",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_07",
+      "subject": "char_shen",
+      "predicate": "residence",
+      "object": "长明塔塔脚的旧船屋",
+      "chapter": "ch002",
+      "quote": "旧船屋就在塔脚，门板漏风，他已经住了三年。",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_08",
+      "subject": "char_shen",
+      "predicate": "ability",
+      "object": "听雾：凭回声辨船的位置和远近",
+      "chapter": "ch002",
+      "quote": "他有一样本事，港里人叫“听雾”：闭上眼，也能凭回声辨出船的位置和远近。",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_09",
+      "subject": "char_su",
+      "predicate": "identity",
+      "object": "长明塔档案房记录员，沈九旧识",
+      "chapter": "ch003",
+      "quote": "她是长明塔档案房的记录员，也是沈九的旧识",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_12",
+      "subject": "char_shen",
+      "predicate": "relationship",
+      "object": "与裴照在 ch001 码头初见",
+      "chapter": "ch001",
+      "quote": "这是沈砚第一次见裴照。",
+      "status": "confirmed",
+      "conflictsWith": []
+    },
+    {
+      "id": "fact_10",
+      "subject": "char_shen",
+      "predicate": "eye_color",
+      "object": "浅褐色",
+      "chapter": "ch002",
+      "quote": "灯影里，沈砚的眼睛是浅褐色的",
+      "status": "conflict",
+      "conflictsWith": [
+        "fact_11"
+      ]
+    },
+    {
+      "id": "fact_11",
+      "subject": "char_shen",
+      "predicate": "eye_color",
+      "object": "灰蓝色",
+      "chapter": "ch005",
+      "quote": "灯影里，沈砚的眼睛是灰蓝色的",
+      "status": "conflict",
+      "conflictsWith": [
+        "fact_10"
+      ]
+    }
+  ],
+  "factContradictions": [
+    {
+      "id": "fc_001",
+      "subject": "char_shen",
+      "predicate": "eye_color",
+      "factIds": [
+        "fact_10",
+        "fact_11"
+      ],
+      "chapters": [
+        "ch002",
+        "ch005"
+      ],
+      "values": [
+        "浅褐色",
+        "灰蓝色"
+      ],
+      "description": "沈砚眼睛颜色前后不一致",
+      "status": "open",
+      "resolution": null,
+      "evidence": [
+        {
+          "chapter": "ch002",
+          "quote": "灯影里，沈砚的眼睛是浅褐色的"
+        },
+        {
+          "chapter": "ch005",
+          "quote": "灯影里，沈砚的眼睛是灰蓝色的"
+        }
+      ]
+    }
+  ],
+  "worldRules": [
+    {
+      "id": "rule_tide_bell",
+      "name": "潮声钟",
+      "text": "潮声钟响时，港口所有人必须停步静立，不许出声、不许走动；违者会被雾带走。",
+      "evidence": {
+        "chapter": "ch001",
+        "quote": "潮声钟响的时候，谁也不许出声，谁也不许走动"
+      },
+      "violationPatterns": [
+        "(潮声钟|钟声|钟响)[^。！？\\n]{0,40}?(开口|说话|出声|喊|叫喊|奔跑|跑|迈步|走动|起身)",
+        "(开口|说话|出声|喊|叫喊|奔跑|跑|迈步|走动|起身)[^。！？\\n]{0,40}?(潮声钟|钟声|钟响)"
+      ],
+      "severity": "blocker"
+    },
+    {
+      "id": "rule_closed_port",
+      "name": "涨雾日封港",
+      "text": "涨雾日封港，任何船不得离岸。",
+      "evidence": {
+        "chapter": "ch001",
+        "quote": "明日是涨雾日，封港。船不许离岸"
+      },
+      "violationPatterns": [
+        "(涨雾日|封港日)[^。！？\\n]{0,30}?(出港|开船|离岸|撑船|驶出)",
+        "(出港|开船|离岸|撑船|驶出)[^。！？\\n]{0,30}?(涨雾日|封港日)"
+      ],
+      "severity": "blocker"
+    }
+  ],
+  "secrets": [
+    {
+      "id": "secret_01",
+      "what": "沈砚的父亲沈九没有死：三年前替人顶事，此后每年冬至在雾里给长明塔送一桶灯油，苏鹤替他隐瞒。",
+      "signatures": [
+        "还活着",
+        "没有死",
+        "没死",
+        "并未遇难",
+        "顶了事",
+        "顶事",
+        "送灯油",
+        "送一桶灯油",
+        "瞒了三年",
+        "替他瞒"
+      ],
+      "dialogueForbiddenBefore": "ch004",
+      "publicAtChapter": "ch004",
+      "knownBy": [
+        {
+          "who": "char_su",
+          "fromChapter": "ch003",
+          "evidence": {
+            "chapter": "ch003",
+            "quote": "沈九没有死。"
+          }
+        },
+        {
+          "who": "char_shen",
+          "fromChapter": "ch004",
+          "evidence": {
+            "chapter": "ch004",
+            "quote": "你父亲还活着。"
+          }
+        },
+        {
+          "who": "char_pei",
+          "fromChapter": "ch005",
+          "evidence": {
+            "chapter": "ch005",
+            "quote": "苏鹤都告诉我了。"
+          }
+        }
+      ]
+    }
+  ],
+  "addressMatrix": [
+    {
+      "id": "addr_pei_shen",
+      "from": "char_pei",
+      "to": "char_shen",
+      "publicForm": "沈先生",
+      "privateForm": "阿砚",
+      "fromChapter": "ch002",
+      "retirePublicFrom": "ch002",
+      "taboo": [
+        "小砚"
+      ],
+      "evidence": {
+        "chapter": "ch002",
+        "quote": "阿砚。"
+      },
+      "note": "第 2 章起改口；「沈先生」只用于第 1 章；「小砚」是忌讳。"
+    },
+    {
+      "id": "addr_shen_pei",
+      "from": "char_shen",
+      "to": "char_pei",
+      "publicForm": "裴副队",
+      "privateForm": "裴照",
+      "fromChapter": "ch001",
+      "retirePublicFrom": null,
+      "taboo": [],
+      "evidence": {
+        "chapter": "ch001",
+        "quote": "来人是巡雾队的副队长裴照，二十四岁"
+      },
+      "note": "无改口。"
+    },
+    {
+      "id": "addr_shen_su",
+      "from": "char_shen",
+      "to": "char_su",
+      "publicForm": "苏姑娘",
+      "privateForm": "苏鹤",
+      "fromChapter": "ch001",
+      "retirePublicFrom": null,
+      "taboo": [],
+      "evidence": {
+        "chapter": "ch003",
+        "quote": "苏姑娘。"
+      },
+      "note": "无改口。"
+    }
+  ],
+  "auRules": [
+    {
+      "id": "au_echo_bell",
+      "name": "回魂钟",
+      "text": "AU：潮声钟可以把亡者的声音送回来，死者能借钟声与人说话。",
+      "signatures": [
+        "回魂",
+        "亡者的声音",
+        "死者的声音",
+        "借钟声",
+        "钟声里的父亲"
+      ],
+      "note": "原著没有这条规则；场景标签为原著向时出现即泄漏。"
+    },
+    {
+      "id": "au_fog_past",
+      "name": "雾中旧影",
+      "text": "AU：雾浓到一定程度时，人能看见已经过去的场景。",
+      "signatures": [
+        "雾里的旧影",
+        "看见过去的场景",
+        "回到那一晚"
+      ],
+      "note": "作者私设；未声明即泄漏。"
+    }
+  ],
+  "headcanonSignatures": [
+    "苏鹤其实是沈九的女儿",
+    "是塔主的私生子",
+    "沈砚的母亲还活着",
+    "长明塔共有十三层",
+    "沈九是雾神"
+  ],
+  "typos": {
+    "沈研": "沈砚",
+    "裴昭": "裴照",
+    "苏鸽": "苏鹤"
+  },
+  "terms": [
+    "沈砚",
+    "裴照",
+    "苏鹤",
+    "沈九",
+    "长明塔",
+    "望潮台",
+    "雾港",
+    "巡雾队",
+    "守灯人",
+    "档案房",
+    "旧船屋",
+    "码头",
+    "潮声钟",
+    "涨雾日",
+    "封港",
+    "出勤簿",
+    "暗格",
+    "灯油",
+    "灯芯",
+    "铜哨",
+    "听雾",
+    "冬至",
+    "未查",
+    "旧存",
+    "阿砚",
+    "沈先生",
+    "苏姑娘",
+    "裴副队",
+    "眼睛",
+    "瞳色",
+    "浅褐色",
+    "灰蓝色",
+    "规矩",
+    "雾"
+  ],
+  "scenes": [
+    {
+      "id": "scene_1",
+      "chapter": "ch001",
+      "kind": "canon",
+      "tag": "原著向",
+      "pov": "char_shen",
+      "present": [
+        "char_shen",
+        "char_pei"
+      ],
+      "register": "public",
+      "instruction": "深夜的码头，裴照在盘查沈砚的货箱。两人第一次见面。沈砚刚搬完一箱灯油，右肩发酸。写一段克制的对峙：裴照要问的似乎不只是灯油。",
+      "contractFile": "contracts/ch001.md",
+      "lookupQueries": [
+        "裴照 巡雾队 副队长",
+        "沈砚 父亲 失踪 三年前"
+      ],
+      "minChars": 500,
+      "maxChars": 900,
+      "requiredForms": [],
+      "mustReveal": [],
+      "probes": [
+        "写到沈砚眉上那道旧疤——让读者看清在哪一侧的眉上。",
+        "裴照第一次开口叫沈砚，把那个称呼写出来（第一次见面，称呼应当带距离）。"
+      ],
+      "timeline": "三年前的冬天，沈九在雾里失踪；本章是同一个月里的深夜，沈砚第一次见裴照。"
+    },
+    {
+      "id": "scene_2",
+      "chapter": "ch002",
+      "kind": "canon",
+      "tag": "原著向",
+      "pov": "char_shen",
+      "present": [
+        "char_shen",
+        "char_pei"
+      ],
+      "register": "private",
+      "instruction": "涨雾日，雾没散。裴照提着新灯芯来到塔脚的旧船屋找沈砚。两人说起出勤簿上对不上的那一页。写一段带试探的私下交谈。",
+      "contractFile": "contracts/ch002.md",
+      "lookupQueries": [
+        "阿砚 改口",
+        "出勤簿 最后一页 对不上"
+      ],
+      "minChars": 500,
+      "maxChars": 900,
+      "requiredForms": [
+        {
+          "from": "char_pei",
+          "to": "char_shen",
+          "form": "阿砚"
+        }
+      ],
+      "mustReveal": [],
+      "probes": [
+        "裴照这一次开口，称呼和上一章不同了——把他亲口叫出的新称呼写在台词里（用引号）。",
+        "出勤簿上对不上的那一页，要作为谈话由头出现。"
+      ],
+      "timeline": "第 1 章次日，雾更浓；两人此前只在码头见过一面。"
+    },
+    {
+      "id": "scene_3",
+      "chapter": "ch003",
+      "kind": "canon",
+      "tag": "原著向",
+      "pov": "char_su",
+      "present": [
+        "char_su"
+      ],
+      "register": "private",
+      "instruction": "档案房里，苏鹤独自整理旧簿子，翻到沈九留下的最后一页。她停下手里的活。写一段以她为视角的室内独处，结尾沈砚在门外叫她。",
+      "contractFile": "contracts/ch003.md",
+      "lookupQueries": [
+        "苏鹤 档案房 记录员",
+        "冬至 雾里 一桶"
+      ],
+      "minChars": 500,
+      "maxChars": 900,
+      "requiredForms": [],
+      "mustReveal": [],
+      "probes": [
+        "苏鹤在心里或嘴上叫沈砚一次，用她惯用的叫法。",
+        "那页纸上的字要露出来（哪怕只露一小截）。"
+      ],
+      "timeline": "冬至前八天；苏鹤已经在档案房替沈九瞒了三年。"
+    },
+    {
+      "id": "scene_4",
+      "chapter": "ch004",
+      "kind": "canon",
+      "tag": "原著向",
+      "pov": "char_shen",
+      "present": [
+        "char_shen",
+        "char_su"
+      ],
+      "register": "private",
+      "instruction": "冬至前七天，档案房里只有苏鹤和沈砚两个人。苏鹤把一件瞒了很久的事告诉了他。写这段告知与反应。",
+      "contractFile": "contracts/ch004.md",
+      "lookupQueries": [
+        "沈砚 知道 父亲 还活着",
+        "冬至 送油 暗格"
+      ],
+      "minChars": 500,
+      "maxChars": 900,
+      "requiredForms": [],
+      "mustReveal": [
+        "secret_01"
+      ],
+      "probes": [
+        "秘密必须由知情的一方亲口说出；不能让不知情的人在场听见。",
+        "沈砚的反应要落到具体的动作或身体感觉上。"
+      ],
+      "timeline": "冬至前七天；沈砚头一次从苏鹤口中听到父亲的事。"
+    },
+    {
+      "id": "scene_5",
+      "chapter": "ch005",
+      "kind": "canon",
+      "tag": "原著向",
+      "pov": "char_shen",
+      "present": [
+        "char_shen",
+        "char_pei"
+      ],
+      "register": "private",
+      "instruction": "冬至前第六天，夜里，裴照来到旧船屋，沈砚坐在门槛上。两人说起冬至那晚的打算。写一段夜谈。",
+      "contractFile": "contracts/ch005.md",
+      "lookupQueries": [
+        "裴照 知道 沈九 还活着",
+        "未查 记录 三年前"
+      ],
+      "minChars": 500,
+      "maxChars": 900,
+      "requiredForms": [],
+      "mustReveal": [],
+      "probes": [
+        "明确写出沈砚此刻眼睛的颜色（浅褐色或灰蓝色，按你的判断写一个，不要含糊）。",
+        "裴照这次来，要带出冬至那晚的打算。"
+      ],
+      "timeline": "冬至前第六天；裴照刚从苏鹤那里知道实情。"
+    },
+    {
+      "id": "scene_6",
+      "chapter": "ch006",
+      "kind": "control",
+      "tag": "原著向",
+      "pov": "char_pei",
+      "present": [
+        "char_pei",
+        "char_shen"
+      ],
+      "register": "private",
+      "instruction": "冬至前第五天，轮到裴照巡夜，沈砚跟着走了一趟。雾薄，港里安静。写一段夜巡，日常、克制。",
+      "contractFile": "contracts/ch006.md",
+      "lookupQueries": [
+        "巡雾队 夜巡 规矩",
+        "旧船屋 塔脚"
+      ],
+      "minChars": 400,
+      "maxChars": 800,
+      "requiredForms": [],
+      "mustReveal": [],
+      "timeline": "冬至前第五天；日常夜巡，没有新秘密揭开。"
+    }
+  ],
+  "lookupQuestions": [
+    {
+      "id": "q01",
+      "question": "裴照是谁？",
+      "call": {
+        "entities": [
+          "裴照"
+        ],
+        "question": "巡雾队副队长"
+      },
+      "expected": [
+        {
+          "chapter": "ch001",
+          "quote": "来人是巡雾队的副队长裴照，二十四岁"
+        }
+      ]
+    },
+    {
+      "id": "q02",
+      "question": "裴照什么时候改口叫阿砚？",
+      "call": {
+        "entities": [
+          "裴照",
+          "阿砚"
+        ],
+        "question": "阿砚 改口"
+      },
+      "expected": [
+        {
+          "chapter": "ch002",
+          "quote": "阿砚"
+        }
+      ]
+    },
+    {
+      "id": "q03",
+      "question": "沈砚什么时候知道父亲还活着？",
+      "call": {
+        "entities": [
+          "沈砚"
+        ],
+        "question": "父亲还活着"
+      },
+      "expected": [
+        {
+          "chapter": "ch004",
+          "quote": "你父亲还活着。"
+        }
+      ]
+    },
+    {
+      "id": "q04",
+      "question": "裴照怎么知道沈九还活着？",
+      "call": {
+        "entities": [
+          "裴照"
+        ],
+        "question": "苏鹤都告诉我了"
+      },
+      "expected": [
+        {
+          "chapter": "ch005",
+          "quote": "苏鹤都告诉我了。"
+        }
+      ]
+    },
+    {
+      "id": "q05",
+      "question": "沈九每年冬至做什么？",
+      "call": {
+        "entities": [
+          "沈九"
+        ],
+        "question": "冬至 送一桶灯油"
+      },
+      "expected": [
+        {
+          "chapter": "ch003",
+          "quote": "每年冬至，雾最厚的那一晚，他都会摇着一只没有灯的小船，到长明塔下送一桶灯油。"
+        }
+      ]
+    },
+    {
+      "id": "q06",
+      "question": "沈砚的眼睛是什么颜色？",
+      "call": {
+        "entities": [
+          "沈砚"
+        ],
+        "question": "眼睛 颜色"
+      },
+      "expected": [
+        {
+          "chapter": "ch002",
+          "quote": "灯影里，沈砚的眼睛是浅褐色的"
+        },
+        {
+          "chapter": "ch005",
+          "quote": "灯影里，沈砚的眼睛是灰蓝色的"
+        }
+      ]
+    },
+    {
+      "id": "q07",
+      "question": "潮声钟响的时候要怎么做？",
+      "call": {
+        "entities": [],
+        "question": "潮声钟 不许出声"
+      },
+      "expected": [
+        {
+          "chapter": "ch001",
+          "quote": "潮声钟响的时候，谁也不许出声，谁也不许走动"
+        }
+      ]
+    },
+    {
+      "id": "q08",
+      "question": "涨雾日封港的规矩是什么？",
+      "call": {
+        "entities": [],
+        "question": "涨雾日 封港 船不许离岸"
+      },
+      "expected": [
+        {
+          "chapter": "ch001",
+          "quote": "明日是涨雾日，封港。船不许离岸"
+        }
+      ]
+    },
+    {
+      "id": "q09",
+      "question": "沈砚的旧船屋在哪里？",
+      "call": {
+        "entities": [
+          "沈砚",
+          "旧船屋"
+        ],
+        "question": "旧船屋 塔脚"
+      },
+      "expected": [
+        {
+          "chapter": "ch002",
+          "quote": "旧船屋就在塔脚"
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "question": "苏鹤在档案房做什么？",
+      "call": {
+        "entities": [
+          "苏鹤"
+        ],
+        "question": "档案房 记录员"
+      },
+      "expected": [
+        {
+          "chapter": "ch003",
+          "quote": "她是长明塔档案房的记录员，也是沈九的旧识"
+        }
+      ]
+    }
+  ]
+}

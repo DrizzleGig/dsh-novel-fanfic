@@ -1,0 +1,16 @@
+[
+  {"kind":"entity","chapter":"ch001","offset":21,"quote":"沈砚把最后一箱灯油搬上栈桥","payload":{"name":"沈砚","aliases":[],"role":"主角","summary":"十七岁的长明塔守灯人学徒，独自生活，父亲沈九三年前在雾中失踪。"},"confidence":0.95},
+  {"kind":"entity","chapter":"ch001","offset":183,"quote":"来人是巡雾队的副队长裴照","payload":{"name":"裴照","aliases":[],"role":"配角","summary":"巡雾队副队长，二十四岁，脸冷话也冷，本章与沈砚初次见面。"},"confidence":0.95},
+  {"kind":"entity","chapter":"ch001","offset":102,"quote":"他父亲沈九在雾里失踪","payload":{"name":"沈九","aliases":[],"role":"配角","summary":"沈砚的父亲，三年前的冬天在雾里失踪，尸首未找到。"},"confidence":0.9},
+  {"kind":"fact","chapter":"ch001","offset":69,"quote":"他今年十七岁","payload":{"subject":"沈砚","predicate":"age","object":"十七岁"},"confidence":0.95},
+  {"kind":"fact","chapter":"ch001","offset":76,"quote":"是长明塔的守灯人学徒","payload":{"subject":"沈砚","predicate":"role","object":"长明塔守灯人学徒（已做三年）"},"confidence":0.95},
+  {"kind":"fact","chapter":"ch001","offset":35,"quote":"右肩的旧伤在冷风里发酸","payload":{"subject":"沈砚","predicate":"injury","object":"右肩旧伤，三年前落下，阴雨天抬不起重物"},"confidence":0.95},
+  {"kind":"fact","chapter":"ch001","offset":211,"quote":"沈砚左眉骨上有一道旧疤","payload":{"subject":"沈砚","predicate":"scar_side","object":"左眉骨（幼时从塔上摔下磕伤）"},"confidence":0.9},
+  {"kind":"fact","chapter":"ch001","offset":102,"quote":"他父亲沈九在雾里失踪","payload":{"subject":"沈砚","predicate":"relationship","object":"父亲沈九，三年前的冬天在雾中失踪"},"confidence":0.9},
+  {"kind":"fact","chapter":"ch001","offset":339,"quote":"那里挂着一枚铜哨，磨得发亮","payload":{"subject":"沈砚","predicate":"possession","object":"铜哨，母亲遗物，吹三短声可唤摆渡的老周"},"confidence":0.9},
+  {"kind":"fact","chapter":"ch001","offset":190,"quote":"副队长裴照，二十四岁","payload":{"subject":"裴照","predicate":"age","object":"二十四岁"},"confidence":0.95},
+  {"kind":"fact","chapter":"ch001","offset":186,"quote":"巡雾队的副队长裴照","payload":{"subject":"裴照","predicate":"role","object":"巡雾队副队长"},"confidence":0.95},
+  {"kind":"world_rule","chapter":"ch001","offset":414,"quote":"明日是涨雾日，封港。船不许离岸","payload":{"text":"涨雾日封港，船不许离岸，灯油须在当日搬完。"},"confidence":0.85},
+  {"kind":"world_rule","chapter":"ch001","offset":524,"quote":"潮声钟响的时候，谁也不许出声，谁也不许走动","payload":{"text":"潮声钟响时，雾港所有人不许出声、不许走动；三年前有人在钟声里喊叫，次日便没再从雾里出来。"},"confidence":0.85},
+  {"kind":"address","chapter":"ch001","offset":401,"quote":"沈先生，","payload":{"from":"裴照","to":"沈砚","form":"沈先生","publicForm":"沈先生","privateForm":"","fromChapter":"ch001","taboo":[]},"confidence":0.8}
+]

@@ -1,0 +1,155 @@
+{
+  "fixture": "A",
+  "version": "0.1.0",
+  "description": "8 类植入错误 + 2 篇干净对照。v0.1 必检门 5 类（appearance / address / knowledge / auLeak / tagDefault）对应用例 gate=true；候选 3 类（copy20 / branchCross / headcanon）只作 warning/info。另有 3 个补充检测器用例（unknown / worldRule / name）用于验证“断言未定事实、世界规则、错名”。",
+  "classes": [
+    { "key": "appearance", "name": "错外貌", "severity": "blocker", "gate": true, "v01": "必检" },
+    { "key": "address", "name": "错称呼", "severity": "blocker", "gate": true, "v01": "必检" },
+    { "key": "knowledge", "name": "提前知情", "severity": "blocker", "gate": true, "v01": "必检" },
+    { "key": "auLeak", "name": "AU 规则泄漏", "severity": "blocker", "gate": true, "v01": "必检" },
+    { "key": "tagDefault", "name": "标签违约", "severity": "blocker", "gate": true, "v01": "必检" },
+    { "key": "copy20", "name": "20 字以上复制", "severity": "warning", "gate": false, "v01": "候选（只报 warning）" },
+    { "key": "branchCross", "name": "分支串线", "severity": "info", "gate": false, "v01": "候选（v0.1 不检查，只记 info）" },
+    { "key": "headcanon", "name": "未声明私设", "severity": "warning", "gate": false, "v01": "候选（只报 warning）" },
+    { "key": "unknown", "name": "断言未定事实", "severity": "blocker", "gate": false, "v01": "补充" },
+    { "key": "worldRule", "name": "世界规则违反", "severity": "blocker", "gate": false, "v01": "补充" },
+    { "key": "name", "name": "错名", "severity": "blocker", "gate": false, "v01": "补充" }
+  ],
+  "cases": [
+    {
+      "id": "e01",
+      "file": "e01-wrong-scar-side.md",
+      "class": "appearance",
+      "scene": "scene_3",
+      "arm": "A",
+      "expect": [{ "detector": "appearance", "code": "appearance_scar_side", "severity": "blocker" }],
+      "note": "把左眉疤写成右眉疤"
+    },
+    {
+      "id": "e02",
+      "file": "e02-address-retired.md",
+      "class": "address",
+      "scene": "scene_2",
+      "arm": "A",
+      "expect": [{ "detector": "address", "code": "address_retired", "severity": "blocker" }],
+      "note": "ch002 起裴照已改口，仍叫“沈先生”"
+    },
+    {
+      "id": "e02b",
+      "file": "e02b-address-taboo.md",
+      "class": "address",
+      "scene": "scene_2",
+      "arm": "A",
+      "expect": [{ "detector": "address", "code": "address_taboo", "severity": "blocker" }],
+      "note": "裴照叫“小砚”，触碰称呼矩阵的 taboo"
+    },
+    {
+      "id": "e03",
+      "file": "e03-knowledge-narration.md",
+      "class": "knowledge",
+      "scene": "scene_2",
+      "arm": "A",
+      "expect": [{ "detector": "knowledge", "code": "knowledge_early_narration", "severity": "blocker" }],
+      "note": "ch002 的 POV 叙述让沈砚提前知道父亲还活着"
+    },
+    {
+      "id": "e03b",
+      "file": "e03b-knowledge-early-dialogue.md",
+      "class": "knowledge",
+      "scene": "scene_4",
+      "arm": "A",
+      "expect": [{ "detector": "knowledge", "code": "knowledge_early_dialogue", "severity": "blocker" }],
+      "note": "裴照在 ch004 说出秘密，但他 ch005 才知情"
+    },
+    {
+      "id": "e04",
+      "file": "e04-au-leak.md",
+      "class": "auLeak",
+      "scene": "scene_5",
+      "arm": "A",
+      "expect": [{ "detector": "auLeak", "code": "au_leak", "severity": "blocker" }],
+      "note": "原著向场景里出现 AU 规则「亡者的声音」"
+    },
+    {
+      "id": "e05",
+      "file": "e05-tag-mismatch.md",
+      "class": "tagDefault",
+      "scene": "scene_5",
+      "arm": "A",
+      "expect": [{ "detector": "tagDefault", "code": "tag_mismatch", "severity": "blocker" }],
+      "note": "正文干净，但标成「私设」，与场景的「原著向」不符"
+    },
+    {
+      "id": "e06",
+      "file": "e06-copy20.md",
+      "class": "copy20",
+      "scene": "scene_3",
+      "arm": "A",
+      "expect": [{ "detector": "copy20", "code": "copy_20", "severity": "warning" }],
+      "note": "连续复制原著 26 字"
+    },
+    {
+      "id": "e07",
+      "file": "e07-branch-cross.md",
+      "class": "branchCross",
+      "scene": "scene_6",
+      "arm": "A",
+      "expect": [{ "detector": "branchCross", "code": "branch_cross", "severity": "info" }],
+      "note": "叙述里冒出「IF 线」分支意识"
+    },
+    {
+      "id": "e08",
+      "file": "e08-headcanon.md",
+      "class": "headcanon",
+      "scene": "scene_3",
+      "arm": "A",
+      "expect": [{ "detector": "headcanon", "code": "headcanon_undeclared", "severity": "warning" }],
+      "note": "未声明私设：「苏鹤其实是沈九的女儿」"
+    },
+    {
+      "id": "e09",
+      "file": "e09-unknown-eye-color.md",
+      "class": "unknown",
+      "scene": "scene_5",
+      "arm": "A",
+      "expect": [{ "detector": "unknown", "code": "unknown_asserted", "severity": "blocker" }],
+      "note": "瞳色冲突未裁决，却断言浅褐色"
+    },
+    {
+      "id": "e10",
+      "file": "e10-worldrule-tide-bell.md",
+      "class": "worldRule",
+      "scene": "scene_1",
+      "arm": "A",
+      "expect": [{ "detector": "worldRule", "code": "worldrule_violation", "severity": "blocker" }],
+      "note": "潮声钟响时开口喊人"
+    },
+    {
+      "id": "e11",
+      "file": "e11-name-typo.md",
+      "class": "name",
+      "scene": "scene_3",
+      "arm": "A",
+      "expect": [{ "detector": "name", "code": "name_typo", "severity": "blocker" }],
+      "note": "错名「沈研」"
+    },
+    {
+      "id": "clean-1",
+      "file": "clean-1.md",
+      "class": "clean",
+      "scene": "scene_6",
+      "arm": "A",
+      "expect": [],
+      "note": "干净对照（日常夜巡）：任何 finding 都算误报"
+    },
+    {
+      "id": "clean-2",
+      "file": "clean-2.md",
+      "class": "clean",
+      "scene": "scene_1",
+      "arm": "A",
+      "expect": [],
+      "note": "干净对照（ch001 码头）：任何 finding 都算误报"
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+[
+  {
+    "kind": "entity",
+    "chapter": "ch006",
+    "offset": 0,
+    "quote": "冬至前第五天，轮到裴照巡夜。",
+    "payload": {
+      "name": "裴照",
+      "aliases": [],
+      "role": "配角",
+      "summary": "巡雾队的人，冬至前第五天轮到巡夜，沈砚跟了他一趟"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "entity",
+    "chapter": "ch006",
+    "offset": 77,
+    "quote": "沈砚在塔下等他。",
+    "payload": {
+      "name": "沈砚",
+      "aliases": [],
+      "role": "主角",
+      "summary": "夜里睡不着，带着铜哨随裴照巡夜，在塔基查看过一块松动的石头"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "entity",
+    "chapter": "ch006",
+    "offset": 184,
+    "quote": "苏鹤今天问我",
+    "payload": {
+      "name": "苏鹤",
+      "aliases": [],
+      "role": "配角",
+      "summary": "问沈砚冬至那晚打算穿什么，又要他别喊"
+    },
+    "confidence": 0.85
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch006",
+    "offset": 7,
+    "quote": "轮到裴照巡夜",
+    "payload": {
+      "subject": "裴照",
+      "predicate": "role",
+      "object": "巡雾队队员"
+    },
+    "confidence": 0.8
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch006",
+    "offset": 45,
+    "quote": "裴照提着风灯出门的时候",
+    "payload": {
+      "subject": "裴照",
+      "predicate": "possession",
+      "object": "风灯"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch006",
+    "offset": 108,
+    "quote": "沈砚把铜哨在指间转了个圈",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "possession",
+      "object": "铜哨"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch006",
+    "offset": 220,
+    "quote": "她怕你冻着",
+    "payload": {
+      "subject": "苏鹤",
+      "predicate": "relationship",
+      "object": "与沈砚亲近，怕他冻着"
+    },
+    "confidence": 0.6
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch006",
+    "offset": 269,
+    "quote": "你父亲既然在雾里走了三年",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "relationship",
+      "object": "父亲在雾里走了三年"
+    },
+    "confidence": 0.85
+  },
+  {
+    "kind": "fact",
+    "chapter": "ch006",
+    "offset": 616,
+    "quote": "一个往旧船屋走",
+    "payload": {
+      "subject": "沈砚",
+      "predicate": "residence",
+      "object": "旧船屋"
+    },
+    "confidence": 0.6
+  },
+  {
+    "kind": "world_rule",
+    "chapter": "ch006",
+    "offset": 23,
+    "quote": "一夜三趟，绕港一圈，最后到长明塔下点一次名",
+    "payload": {
+      "text": "巡雾队巡夜规矩：一夜三趟，绕港一圈，最后到长明塔下点一次名"
+    },
+    "confidence": 0.9
+  },
+  {
+    "kind": "world_rule",
+    "chapter": "ch006",
+    "offset": 302,
+    "quote": "破了规矩，雾就不认人了",
+    "payload": {
+      "text": "雾里不可喊：喊了就是破规矩，规矩一破，雾就不认人"
+    },
+    "confidence": 0.85
+  }
+]
