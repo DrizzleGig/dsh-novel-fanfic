@@ -1,7 +1,7 @@
 {
   "name": "dsh-novel-fanfic",
   "version": "0.1.0",
-  "description": "原著有据可查，本作设定由你决定。导入原著得到可核 canon，声明你故意的二创改动；写的时候本作优先于原著，写完检查器只指「跟哪条设定冲突」，不逼你改回原著。默认关闭，不写正文。",
+  "description": "把原著导入，就能拥有一套专属的同人创作资料库。人物关系、剧情经历、世界规则，随时查阅；你想改写的人物命运、关系和剧情，也能按本作设定记录下来。写作时帮你理清人物知情、时间线和场景细节，写完还能检查人物 OOC、设定冲突和剧情前后矛盾。原著只是参考，你的故事由你决定。",
   "type": "module",
   "exports": {
     ".": "./index.js",
@@ -62,6 +62,13 @@
   ],
   "license": "MIT",
   "author": "DrizzleGig",
+  "contributors": [
+    {
+      "name": "MiyueWinter",
+      "email": "mingyue_11129@qq.com",
+      "url": "https://github.com/MiyueWinter"
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/DrizzleGig/dsh-novel-fanfic.git"

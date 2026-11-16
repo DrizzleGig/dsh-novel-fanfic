@@ -213,7 +213,8 @@ Canon 是原著事实；Fic Canon 是「这一版同人正式生效的设定」�
 
 | 项 | 信息 |
 |---|---|
-| 插件名 | 同人工作室 |
+| 插件列表名 | 同人 |
+| 面板名 | 同人工作室 |
 | 包名 | `dsh-novel-fanfic` |
 | 版本 | v0.1.0 |
 | 运行环境 | Node.js ≥ 20 |
@@ -222,7 +223,7 @@ Canon 是原著事实；Fic Canon 是「这一版同人正式生效的设定」�
 | 数据目录 | `.dsh-novel-fanfic/<project>/` |
 | 工具 | `fic_state` / `fic_source` / `fic_contract` / `fic_check` / `fic_lookup` |
 | 契约 | 九段 + 有本作设定时追加【本作】，总预算 ≤800 字 |
-| 检查器 | 12 项确定性检测；每条 finding 带位置 / 依据 / canonRef |
+| 检查器 | 12 项确定性检测；每条 finding 带位置 / 依据 / canonRef；OOC 只覆盖可核对的部分，不做 LLM 评分 |
 | 测试 | `npm test` 140/140 |
 | 默认状态 | 关闭（`/fic on` 启用） |
 | 许可 | MIT |
@@ -243,6 +244,18 @@ Canon 是原著事实；Fic Canon 是「这一版同人正式生效的设定」�
 - [第 1 步验收](<../docs/小说插件系列-fanfic-v0.1.0-步骤1-验收.md>)
 - [技术 README（评测与限制）](<../docs/小说插件系列-fanfic-v0.1.0-技术README.md>)
 
-## License
+## 共同作者
 
-MIT License · Copyright (c) 2026 DrizzleGig
+**v0.1.0 共同作者：[MiyueWinter](https://github.com/MiyueWinter)** —— 文案、测试、设计与开发。
+
+## 喜欢它？
+
+如果「同人工作室」帮你在同人写作里守住了原著事实、也守住了你的二创改动，欢迎在 [GitHub](https://github.com/DrizzleGig/dsh-novel-fanfic) 点亮 ⭐，也欢迎 [Issue](https://github.com/DrizzleGig/dsh-novel-fanfic/issues) 或 [PR](https://github.com/DrizzleGig/dsh-novel-fanfic/pulls)。
+
+## 许可证
+
+MIT License，见 [LICENSE](LICENSE)。
+
+---
+
+原著只是参考，你的故事由你决定。
