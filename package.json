@@ -28,7 +28,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check index.js && node --check client.js && node --check lib/service.mjs && node --check lib/canon-store.mjs && node --check lib/exports.mjs && node --check lib/mission.mjs && node --check lib/checker.mjs && node --check lib/compiler.mjs && node --check lib/canon-adapter.mjs && node --check lib/ingest.mjs",
+    "check": "node --check index.js && node --check client.js && node --check lib/service.mjs && node --check lib/canon-store.mjs && node --check lib/exports.mjs && node --check lib/mission.mjs && node --check lib/checker.mjs && node --check lib/compiler.mjs && node --check lib/canon-adapter.mjs && node --check lib/ingest.mjs && node --check lib/tool-schema.mjs",
     "eval": "node scripts/fanfic-eval.mjs",
     "eval:verify": "node scripts/fanfic-eval.mjs verify",
     "eval:check": "node scripts/fanfic-eval.mjs check",
