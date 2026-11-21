@@ -1,4 +1,4 @@
-﻿// DSH 插件入口：把 canon / 契约编译器 / 检查器 / lookup 接成 fic_* 工具。
+// DSH 插件入口：把 canon / 契约编译器 / 检查器 / lookup 接成 fic_* 工具。
 // 默认关闭：工具注册时带 when，只有在本会话执行过 `/fic on` 之后才可见。
 // 设计约束见 docs/小说插件系列-fanfic-v0.1.0-步骤1-验收.md 与 README「插件」小节。
 
@@ -1578,12 +1578,18 @@ export function apply(ctx, config = {}) {
         return { kind: 'success', text: '同人工作室已收起，fic_* 工具从本会话移除；这个选择也记住了（下次启动同样关闭）。' };
       }
       const on = isOn({ session: { id: key } });
-      return {
-        kind: 'success',
-        text: on
-          ? '同人工作室：已开启。可用 fic_state / fic_source / fic_contract / fic_check / fic_lookup。'
-          : '同人工作室：关闭。输入 /fic on 启用（工具默认不可见，启用前不会占用上下文）。',
-      };
+      const installed = conductorInstalled();
+      const driven = installed && effectiveOn(false, key);
+      const usable = effectiveOn(on, key);
+      const head = usable
+        ? `同人工作室：可用（独立开关：${on ? '开' : '关'}）。fic_state / fic_source / fic_contract / fic_check / fic_plan / fic_lookup 可用。`
+        : `同人工作室：不可用（独立开关：${on ? '开' : '关'}）。`;
+      const tail = installed
+        ? (driven
+          ? '\n故事总控：本会话开——同人工具随总控生效，/fic on 的状态只作独立模式偏好。'
+          : '\n故事总控：本会话关——装了故事总控时它说了算，四个插件都不工作；要写同人就 /cue on。')
+        : (on ? '' : '\n输入 /fic on 启用（工具默认不可见，启用前不会占用上下文）。');
+      return { kind: 'success', text: head + tail };
     },
   });
 

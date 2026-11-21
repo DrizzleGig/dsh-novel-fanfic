@@ -59,10 +59,10 @@ test('不带 --json 的 /fic status 仍回人类可读文案', async () => {
   const agent = { session: { id: 'session-text' } };
   const off = handler({ agent, rawInput: 'status' });
   assert.equal(off.kind, 'success');
-  assert.match(off.text, /关闭/);
+  assert.match(off.text, /不可用/);
   handler({ agent, rawInput: 'on' });
   const on = handler({ agent, rawInput: 'status' });
-  assert.match(on.text, /已开启/);
+  assert.match(on.text, /可用/);
 });
 
 
