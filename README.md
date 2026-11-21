@@ -4,7 +4,16 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/DrizzleGig/dsh-novel-fanfic/blob/main/LICENSE)
 [![stars](https://img.shields.io/github/stars/DrizzleGig/dsh-novel-fanfic)](https://github.com/DrizzleGig/dsh-novel-fanfic/stargazers)
 
-## 本版本（v0.2.2，2026-11-21）
+## 本版本（v0.2.3，2026-11-22）
+
+- **修：打开/刷新右栏「同人」面板不再往对话里写命令行**。0.2.2 之前面板取数走 `/fic panel --json` 等命令，而 DSH 的 `commands.execute()` 每次都会往会话日志追加 `command/run` + `command/done`——实测单个会话累计 51 行「fic」命令卡。现在读数据走 `novelFanficPanel` remote（Host 进程内调用，与 `/fic` 共用同一个 handler），**读操作零命令事件**；`/fic on|off`、任务卡保存、确认/拒绝/裁决、导入等写操作仍走命令（一次点击一行，是审计）。
+- **修：`/fic search` 的 `--limit 20` 曾被拼进搜索词**（变成搜「阿砚 20」）。面板走 remote 后直接传 `{ term, limit }`；CLI 也排除了 `--limit` 的取值。
+- **修：确认 / 拒绝 / 裁决现在显式带当前项目**，不再依赖全局「当前项目」偏好（多项目时不会写错）。
+- **修：保存任务卡不再重复刷新**（原来一次保存会触发两轮读，最多 10 条事件；现在 6 条且读的部分为 0）。
+- 面板读接口与 Host 版本不匹配时明确报「请更新并重载 DSH」，**不会悄悄退回读命令**（否则污染重现）。
+- 测试 **176 → 179**（新增 panel remote 契约与「读不发命令」回归）。
+
+## 上一版（v0.2.2，2026-11-21）
 
 - **装了故事总控时，开关由它决定**：总控关着 → 同人工具一个都不工作（哪怕 `/fic on` 过）；总控开着 → 可用（哪怕没 `/fic on`）。没装故事总控时，照旧按 `/fic on|off`。
 - `/fic` 状态改成「可用 / 不可用（独立开关：开/关）」，并直接说明当前由谁管。

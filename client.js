@@ -2,8 +2,9 @@
 // 信息架构按 docs/小说插件系列-fanfic-侧边栏IA-v1.md 与效果图 fanfic-sidebar-ia-v1.png：
 //   4 个一级区（总览/设定/剧情/原文）+ 5 个设定子区（人物/势力/关系/世界/冲突）
 //   + 审阅徽标（右上）+ 写作抽屉（右下）。
-// 数据全部来自宿主 `/fic panel --json` 等命令：客户端不读文件、不复制 canon 逻辑；
+// 数据来自宿主的面板 read remote（0.2.3 起）：客户端不读文件、不复制 canon 逻辑；
 // 写入与编译都在宿主（index.js）完成，这里只做展示与触发。
+// 注意：读数据不许再借 `/fic ... --json` 命令——commands.execute() 会往会话日志写行。
 // 样式只用 --dsw-alias-* 主题 token（深浅色跟随 DSH），不引外部图标库，图标是内联 SVG。
 
 window.__ModuleLoader__.load({
@@ -16,6 +17,46 @@ window.__ModuleLoader__.load({
     const KIND = 'fanfic';
     const LABEL = '同人';
     const TITLE = '同人工作室';
+
+    // ── panel remote 契约（与 lib/remote-contract.js 对齐）──────────────────────
+    // 客户端不能 require 宿主的 lib/，所以协议在这里内嵌一份；test 里核对两侧一致。
+    const panelScalar = (validate) => ({
+      parse(value) {
+        validate(value);
+        return value;
+      },
+      safeParse(value) {
+        try {
+          validate(value);
+          return { success: true, data: value };
+        } catch (error) {
+          return { success: false, error };
+        }
+      },
+    });
+    const panelCodec = (typeSymbol, schema) => ({ mode: 'strict', typeSymbol, create: () => schema });
+    const panelParam = (name, schema) => ({ name, wire: name, source: 'json', codec: panelCodec(name, schema) });
+    const PANEL_METHODS = [
+      'identity', 'getPanel', 'listProjects', 'getChapter', 'getContract', 'getPlan',
+      'search', 'previewImport', 'listImportFiles', 'checkDraft', 'pickDirectory', 'getDeltas',
+    ];
+    const TYPERT_REMOTE = {
+      package: 'dsh-novel-fanfic',
+      descriptors: PANEL_METHODS.map((method) => ({
+        id: 'dsh-novel-fanfic#novelFanficPanel/' + method,
+        namespace: 'novelFanficPanel',
+        service: 'novelFanficPanel',
+        method,
+        invocation: { kind: 'direct' },
+        parameters: method === 'identity'
+          ? [panelParam('sessionId', panelScalar((v) => { if (typeof v !== 'string' || !v) throw new Error('sessionId must be a non-empty string'); }))]
+          : [
+            panelParam('sessionId', panelScalar((v) => { if (typeof v !== 'string' || !v) throw new Error('sessionId must be a non-empty string'); })),
+            panelParam('request', panelScalar((v) => { if (v !== undefined && v !== null && (typeof v !== 'object' || Array.isArray(v))) throw new Error('request must be a plain object'); })),
+          ],
+        result: panelCodec('FanficPanelPayload', panelScalar(() => {})),
+      })),
+    };
 
     // ── 主题 token ────────────────────────────────────────────────────────────
     const c = {
@@ -555,6 +596,10 @@ window.__ModuleLoader__.load({
 
       const [state, setState] = React.useState({ phase: 'loading', data: null, error: null });
       const [project, setProject] = React.useState('');
+      // 写操作显式带上当前已解析的项目：不靠全局偏好，避免另一面板切项目后写错。
+      const activeProject = function () {
+        return (state && state.data && state.data.project) || project || undefined;
+      };
       const [projects, setProjects] = React.useState([]);
       const [tab, setTab] = React.useState('canon');
       const [sub, setSub] = React.useState('characters');
@@ -959,7 +1004,7 @@ window.__ModuleLoader__.load({
             };
             await face.planSet(chapterId, payload, project || undefined);
             setMissionDraft(null);
-            await refresh();
+            // 刷新由外层 run() 统一做一次；这里再 refresh() 会重复两次读。v0.2.3 去掉。
           });
         };
 
@@ -2141,8 +2186,8 @@ window.__ModuleLoader__.load({
                         ),
                         h('div', { style: { color: c.text, fontSize: 11.5, lineHeight: 1.65, margin: '3px 0 6px' } }, item.label),
                         h('div', { style: { display: 'flex', gap: 5 } },
-                          button({ small: true, variant: 'primary', icon: 'check', disabled: busy === '确认 ' + item.id, onClick: function () { return run('确认 ' + item.id, function () { return face.confirm([item.id]); }); }, children: '确认' }),
-                          button({ small: true, tone: c.error, disabled: busy === '拒绝 ' + item.id, onClick: function () { return run('拒绝 ' + item.id, function () { return face.reject([item.id]); }); }, children: '拒绝' }),
+                          button({ small: true, variant: 'primary', icon: 'check', disabled: busy === '确认 ' + item.id, onClick: function () { return run('确认 ' + item.id, function () { return face.confirm([item.id], activeProject()); }); }, children: '确认' }),
+                          button({ small: true, tone: c.error, disabled: busy === '拒绝 ' + item.id, onClick: function () { return run('拒绝 ' + item.id, function () { return face.reject([item.id], activeProject()); }); }, children: '拒绝' }),
                         ),
                       );
                     })
@@ -2157,9 +2202,9 @@ window.__ModuleLoader__.load({
                         h('div', { style: { color: c.text, fontSize: 11.5, lineHeight: 1.65, margin: '3px 0' } }, fc.description),
                         fc.values && fc.values.length ? h('div', { style: { color: c.warn, fontSize: 10.5, marginBottom: 6 } }, fc.values.join('  vs  ')) : null,
                         h('div', { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } },
-                          button({ small: true, disabled: !!busy, onClick: function () { return run('裁决 ' + fc.id + ' later', function () { return face.resolve(fc.id, 'later'); }); }, children: '以后章为准' }),
-                          button({ small: true, disabled: !!busy, onClick: function () { return run('裁决 ' + fc.id + ' earlier', function () { return face.resolve(fc.id, 'earlier'); }); }, children: '以前章为准' }),
-                          button({ small: true, disabled: !!busy, onClick: function () { return run('裁决 ' + fc.id + ' both', function () { return face.resolve(fc.id, 'both'); }); }, children: '两者都算' }),
+                          button({ small: true, disabled: !!busy, onClick: function () { return run('裁决 ' + fc.id + ' later', function () { return face.resolve(fc.id, 'later', activeProject()); }); }, children: '以后章为准' }),
+                          button({ small: true, disabled: !!busy, onClick: function () { return run('裁决 ' + fc.id + ' earlier', function () { return face.resolve(fc.id, 'earlier', activeProject()); }); }, children: '以前章为准' }),
+                          button({ small: true, disabled: !!busy, onClick: function () { return run('裁决 ' + fc.id + ' both', function () { return face.resolve(fc.id, 'both', activeProject()); }); }, children: '两者都算' }),
                         ),
                       );
                     })
@@ -2728,7 +2773,26 @@ window.__ModuleLoader__.load({
 
     return {
       inject: ['slots', 'sidebarRight', 'sidebarRightTabs', 'remote', 'remote.commands'],
-      apply(ctx) {
+      async apply(ctx) {
+        // v0.2.3：面板读数据走 panel remote（Host 进程内调用），不再执行 /fic 命令。
+        // 命令通道只留给作者显式写操作（on/off、plan set、confirm/reject/resolve…）。
+        let panelRemote = null
+        try {
+          const dispose = await ctx.remote.$mount(TYPERT_REMOTE)
+          if (typeof dispose === 'function') {
+            ctx.effect(() => () => {
+              try {
+                dispose()
+              } catch {
+                // 已经卸载
+              }
+            })
+          }
+          panelRemote = ctx.get('remote.novelFanficPanel') ?? null
+          if (!panelRemote) console.error('[novel-fanfic] remote.novelFanficPanel 未注册')
+        } catch (error) {
+          console.error('[novel-fanfic] panel remote mount 失败', error)
+        }
         ctx.effect(
           () =>
             ctx.slots.inject('sidebar.right.pane.tab', function () {
@@ -2770,12 +2834,28 @@ window.__ModuleLoader__.load({
 
                     const withProject = (project) => (project ? ' --project ' + project : '');
 
+                    // panel remote 的返回是 RPC 包装 { ok, value?, error? }；成功时直接用 value。
+                    const unwrap = (rpc) => {
+                      if (rpc && rpc.ok === false) {
+                        const reason = rpc.error ? (rpc.error.message || rpc.error.code) : '未知错误';
+                        throw new Error('面板读接口调用失败：' + String(reason || ''));
+                      }
+                      return rpc && typeof rpc === 'object' && 'value' in rpc ? rpc.value : rpc;
+                    };
+                    const callRemote = (method, request) => {
+                      const remote = panelRemote;
+                      if (!remote || typeof remote[method] !== 'function') {
+                        return Promise.reject(new Error('面板读接口未就绪：请更新并重载 DSH（0.2.3 起面板读取走 remote）。'));
+                      }
+                      return Promise.resolve(remote[method](sessionId, request || {})).then(unwrap);
+                    };
+
                     return {
                       load: function (project) {
-                        return runJson('/fic panel --json' + withProject(project));
+                        return callRemote('getPanel', { project: project || null });
                       },
                       projects: function () {
-                        return runJson('/fic projects --json');
+                        return callRemote('listProjects', {});
                       },
                       use: function (project) {
                         return runJson('/fic use ' + project + ' --json');
@@ -2784,14 +2864,14 @@ window.__ModuleLoader__.load({
                         return run('/fic on');
                       },
                       chapter: function (id, project) {
-                        return runJson('/fic chapter ' + id + ' --json' + withProject(project));
+                        return callRemote('getChapter', { chapter: id, project: project || null });
                       },
                       contract: function (id, project) {
-                        return runJson('/fic contract ' + id + ' --json' + withProject(project));
+                        return callRemote('getContract', { chapter: id, project: project || null });
                       },
-                      // 章节任务卡（v0.2.0）：面板读/写都走 /fic plan。
+                      // 章节任务卡（v0.2.0）：读走 remote，写仍走 /fic plan set。
                       plan: function (id, project) {
-                        return runJson('/fic plan get ' + id + ' --json' + withProject(project));
+                        return callRemote('getPlan', { chapter: id, project: project || null });
                       },
                       planSet: function (id, patch, project) {
                         const p = patch || {};
@@ -2822,26 +2902,18 @@ window.__ModuleLoader__.load({
                         return runJson('/fic plan clear ' + id + ' --json' + withProject(project));
                       },
                       search: function (term, project) {
-                        return runJson('/fic search ' + term + ' --json --limit 20' + withProject(project));
+                        // 0.2.3：走 remote，term/limit 结构化传递（旧命令路径会把 --limit 的 20 拼进搜索词）。
+                        return callRemote('search', { term: term, limit: 20, project: project || null });
                       },
                       preview: function (file, project) {
-                        return runJson('/fic preview ' + file + ' --json' + withProject(project));
+                        return callRemote('previewImport', { file: file, project: project || null });
                       },
                       pickDir: async function () {
-                        try {
-                          return await runJson('/fic pickdir --json');
-                        } catch (error) {
-                          // 宿主用 kind:error + JSON 正文报告「没有选择器 / 不是 native」；解析出来给面板用。
-                          const message = String((error && error.message) || error);
-                          try {
-                            return JSON.parse(message);
-                          } catch {
-                            throw error;
-                          }
-                        }
+                        // 只有作者点按钮时才调用；不在挂载/刷新时触发。
+                        return callRemote('pickDirectory');
                       },
                       files: function (dir) {
-                        return runJson('/fic files ' + dir + ' --json');
+                        return callRemote('listImportFiles', { dir: dir });
                       },
                       waive: function (chapter, code, quote, reason, project) {
                         return runJson('/fic waive ' + chapter + ' ' + code
@@ -2867,7 +2939,7 @@ window.__ModuleLoader__.load({
                         return runJson(line + ' --json' + withProject(project));
                       },
                       deltas: function (project) {
-                        return runJson('/fic delta list --json' + withProject(project));
+                        return callRemote('getDeltas', { project: project || null });
                       },
                       addDelta: function (payload, project) {
                         const p = payload || {};
@@ -2908,7 +2980,7 @@ window.__ModuleLoader__.load({
                         return run('/fic import ' + file + withProject(project));
                       },
                       checkDraft: function (id, text, project) {
-                        return runJson('/fic check ' + id + ' --json --text ' + encodeURIComponent(text) + withProject(project));
+                        return callRemote('checkDraft', { chapter: id, text: text, project: project || null });
                       },
                     };
                   },

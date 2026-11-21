@@ -9,3 +9,5 @@
       name: 'dsh-novel-fanfic'
       config:
         fixture: 'dsh-novel-fanfic/fixtures/fixture-a'
+    - id: novel-fanfic-remote
+      name: 'dsh-novel-fanfic/remote'

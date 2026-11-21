@@ -1029,7 +1029,9 @@ export function apply(ctx, config = {}) {
   }
 
   // ── 命令：/fic on|off|status ───────────────────────────────────────────────
-  ctx.commands.register({
+  // v0.2.3：面板读数据不再执行 /fic 命令（那会往会话日志写 command/run + command/done）。
+  // Host 半把同一个 handler 作为进程内函数暴露给 panel remote，CLI 与面板共用一份实现。
+  const ficCommand = {
     name: 'fic',
     description: '同人工作室：/fic on 启用 fic_* 工具，/fic off 收起，/fic status 看状态。',
     // 带参数的命令必须声明 input：DSH 客户端只对「裸命令」直接执行，
@@ -1055,7 +1057,7 @@ export function apply(ctx, config = {}) {
       const projectArg = flagValue('--project');
       // 参数里可能混着 --json / --project <值> 这类开关；命令词和位置参数只数非开关项，
       // 开关自己的取值（--project 后面那个词）也要剔掉。
-      const words = parts.filter((p, i) => !p.startsWith('--') && parts[i - 1] !== '--project');
+      const words = parts.filter((p, i) => !p.startsWith('--') && parts[i - 1] !== '--project' && parts[i - 1] !== '--limit');
       const arg = (words[0] || '').toLowerCase();
       const scope = () => (projectArg ? { project: projectArg } : {});
       // 不传 --project 时留空，让 ctxOf 回落到「记住的项目」，再回落到配置默认。
@@ -1595,7 +1597,29 @@ export function apply(ctx, config = {}) {
         : (on ? '' : '\n输入 /fic on 启用（工具默认不可见，启用前不会占用上下文）。');
       return { kind: 'success', text: head + tail };
     },
-  });
+  };
+  ctx.commands.register(ficCommand);
+
+  // 面板读接口（0.2.3）：与 /fic 命令共用同一个 handler，但不经过 commands.execute，
+  // 所以读面板不会写 command/run / command/done。remote 半（lib/remote.js）只读这一层。
+  if (typeof ctx.provide === 'function') {
+    const panelView = {
+      apiVersion: 1,
+      async dispatch(agent, line) {
+        return await ficCommand.handler({
+          agent,
+          rawInput: String(line || ''),
+          attachments: [],
+          signal: new AbortController().signal,
+        });
+      },
+    };
+    if (typeof ctx.effect === 'function') {
+      ctx.effect(() => ctx.provide('novelFanficPanelView', panelView));
+    } else {
+      ctx.provide('novelFanficPanelView', panelView);
+    }
+  }
 
   // ── 只读服务：novelFanfic（v0.2.0）──────────────────────────────────────────
   // 与契约 §3 一致：只读、第一参数是绝对 cwd、永不读夹具、revision 与内容同快照。

@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## 0.2.3 — 2026-11-22
+
+### 修复：面板读取会往对话里写「fic」命令行
+
+- **现象**：打开或刷新右栏「同人」面板，对话时间线多出一行 `fic` 命令卡；一个会话累计 51 行。刷新一次写 4 条事件，保存任务卡最多 10 条。
+- **根因**：客户端用 `ctx.remote.commands.execute('/fic panel --json')` 取数，而 DSH 的 `commands.execute()` 每次都会把 `command/run` + `command/done` 追加进会话日志（`@deepseek-ai/dsh-commands` 源码注释明确）。
+- **修复**：新增 `novelFanficPanel` typert remote（12 个只读方法），Host 半 `novelFanficPanelView` 与 `/fic` 命令**共用同一个 handler**，进程内调用、不经过命令通道。客户端读操作全部改走 remote；写操作（`on/off`、`plan set/clear`、`confirm/reject/resolve`、`import`、`waive/declare/delta`）保留命令。
+- **兼容**：新 client + 旧 Host 明确报「面板读接口未就绪，请更新并重载 DSH」，不会静默退回读命令；旧 client + 新 Host 仍按旧命令路径工作（需要刷新客户端才不再写行）。
+
+### 修复：`/fic search` 把 `--limit` 的取值拼进搜索词
+
+- `/fic search 阿砚 --json --limit 20` 实际搜的是「阿砚 20」。命令行参数解析排除了 `--limit` 的取值；面板改走 remote，直接传 `{ term, limit }`。
+
+### 修复：确认 / 拒绝 / 裁决未显式传项目
+
+- 三个写操作现在都带当前已解析的项目，不再依赖全局「当前项目」偏好；多项目并行时不会写错项目。
+
+### 修复：保存任务卡重复刷新
+
+- `planSet` 内部与外层 `run()` 各刷新一次；去掉内部那次，一次保存只刷新一轮。
+
+### 测试
+
+- `node --test` **179/179**（新增 `test/panel-remote.test.mjs`：Host 提供 view、契约 12 方法、客户端不再拼读命令；`test/client.test.mjs` 重写为「读走 remote、写走命令」）。
+
 ## 0.2.2 — 2026-11-21
 
 - 接管：工具门改成 `effectiveOn = 装了故事总控 ? conductor.isDriving : /fic on`；总控关着时同人工具不可用，开着时可用。
