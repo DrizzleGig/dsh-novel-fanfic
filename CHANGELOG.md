@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.2.2 — 2026-11-21
+
+- 接管：工具门改成 `effectiveOn = 装了故事总控 ? conductor.isDriving : /fic on`；总控关着时同人工具不可用，开着时可用。
+- `/fic` 状态文案：可用 / 不可用 + 独立开关 + 故事总控开/关说明。
+- 新增 `lib/tool-schema.mjs` 与 `test/tool-schema.test.mjs`（参数 schema 守卫，0.2.0 的 400 回归用例）。
+- 文档：README 顶部补 v0.2.1 的 400 修复说明与 v0.2.2 行为。
+
+
 ## v0.2.1（2026-11-21）
 
 ### 修复：开启同人工作室后，DSH 里每条消息都返回 400

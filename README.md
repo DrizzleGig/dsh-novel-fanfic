@@ -4,6 +4,13 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/DrizzleGig/dsh-novel-fanfic/blob/main/LICENSE)
 [![stars](https://img.shields.io/github/stars/DrizzleGig/dsh-novel-fanfic)](https://github.com/DrizzleGig/dsh-novel-fanfic/stargazers)
 
+## 本版本（v0.2.2，2026-11-21）
+
+- **装了故事总控时，开关由它决定**：总控关着 → 同人工具一个都不工作（哪怕 `/fic on` 过）；总控开着 → 可用（哪怕没 `/fic on`）。没装故事总控时，照旧按 `/fic on|off`。
+- `/fic` 状态改成「可用 / 不可用（独立开关：开/关）」，并直接说明当前由谁管。
+- 工具参数 schema 守卫进 `npm test`（`test/tool-schema.test.mjs`）：挡住「整张参数表当 JSON Schema」这一类会导致宿主每条消息 400 的错误。
+
+
 ## 原著有据可查，本作设定由你决定。
 
 写同人最麻烦的，往往不是想剧情，而是记住原著到底写过什么，以及这一版你到底改了什么。
