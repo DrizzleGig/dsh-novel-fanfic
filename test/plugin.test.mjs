@@ -56,6 +56,45 @@ test('插件导出 name / inject，注册 6 个 fic 工具和 /fic 命令', () =
   assert.equal(commands[0].name, 'fic');
 });
 
+test('所有 fic 工具向宿主提供完整 JSON Schema', () => {
+  const definitions = byName(harness().tools);
+  for (const { parameters } of Object.values(definitions)) {
+    assert.equal(parameters.type, 'object');
+    assert.equal(typeof parameters.properties, 'object');
+    for (const schema of Object.values(parameters.properties)) {
+      assert.equal(typeof schema.type, 'string');
+      assert.equal(schema.required, undefined, 'required 应是参数名列表，不是字段 schema 的属性');
+      if (schema.type === 'array') assert.equal(typeof schema.items?.type, 'string');
+    }
+    for (const name of parameters.required || []) {
+      assert.equal(typeof name, 'string');
+      assert.ok(Object.hasOwn(parameters.properties, name));
+    }
+  }
+
+  const plan = definitions.fic_plan.parameters;
+  assert.deepEqual(plan.required, ['chapter']);
+  assert.deepEqual(plan.properties.title, { type: 'string', description: '这一章的一句话标题' });
+});
+
+test('0.2.0 回归：参数表不会顶到 schema 根（title 撞 JSON Schema 注解关键字）', () => {
+  // 0.2.0 把整张「参数名 → 描述对象」表当 parameters 交给宿主，宿主原样透传给模型接口；
+  // 接口按 JSON Schema 解析根级键，title 是注解关键字、必须是字符串 → 每条消息 400。
+  const allowedRootKeys = ['type', 'properties', 'required', 'additionalProperties'];
+  for (const [toolName, { parameters }] of Object.entries(byName(harness().tools))) {
+    assert.deepEqual(
+      Object.keys(parameters).filter((key) => !allowedRootKeys.includes(key)),
+      [],
+      `${toolName} 的 parameters 根级只允许 JSON Schema 关键字`,
+    );
+    assert.equal(parameters.title, undefined, `${toolName} 的参数名不能落在 schema 根上`);
+    assert.equal(parameters.chapter, undefined);
+  }
+  const plan = byName(harness().tools).fic_plan.parameters;
+  assert.deepEqual(Object.keys(plan).sort(), ['properties', 'required', 'type']);
+  assert.deepEqual(plan.properties.title, { type: 'string', description: '这一章的一句话标题' });
+});
+
 test('工具默认不可见，/fic on 之后才对同一会话可见', () => {
   const { tools, commands } = harness();
   const agent = { session: { id: 'session-a' } };

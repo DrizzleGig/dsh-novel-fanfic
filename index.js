@@ -38,6 +38,22 @@ const DEFAULTS = {
   fixture: 'dsh-novel-fanfic/fixtures/fixture-a',
 };
 
+/** 把插件内部的参数字段简写编译成宿主和模型 API 都接受的 JSON Schema。 */
+function parameterSchema(fields) {
+  const properties = {};
+  const required = [];
+  for (const [name, definition] of Object.entries(fields)) {
+    const { required: isRequired, ...property } = definition;
+    properties[name] = property;
+    if (isRequired === true) required.push(name);
+  }
+  return {
+    type: 'object',
+    properties,
+    ...(required.length ? { required } : {}),
+  };
+}
+
 /** 从 start 向上找含夹具的开发 checkout（cordis.patch.yml 的 root 没生效时的兜底）。 */
 function findRepoRoot(start) {
   let dir = path.resolve(start);
@@ -267,10 +283,10 @@ export function apply(ctx, config = {}) {
     description:
       '查看同人工作室的当前状态：夹具章节数、canon 各桶的 confirmed 数量、本作设定条数、未裁决的设定矛盾、契约漂移。'
       + '在任何 fic_* 操作前先用它确认项目已经导入原著。插件需先 /fic on。',
-    parameters: {
+    parameters: parameterSchema({
       project: { type: 'string', description: '项目名（.dsh-novel-fanfic/<project>），默认取插件配置。' },
       root: { type: 'string', description: '工作目录，默认取插件配置。' },
-    },
+    }),
     output: output(),
     async execute(args) {
       const lines = [];
@@ -301,7 +317,7 @@ export function apply(ctx, config = {}) {
       '管理原著来源。action=import（file=本地 txt/md 路径，UTF-8 或 GB18030，≤20MB，重复文件会被 sha256 拦下）、'
       + 'action=list（列出已导入的章节）、action=read（chapter=chNNN，读该章正文）、action=index（读确定性索引：人物候选/称呼/统计）。'
       + '导入只做存储与分章，不生成 canon；canon 走提案与人工确认。',
-    parameters: {
+    parameters: parameterSchema({
       action: {
         type: 'string',
         required: true,
@@ -313,7 +329,7 @@ export function apply(ctx, config = {}) {
       limit: { type: 'integer', description: 'action=read 时最多返回多少字，默认 4000。' },
       project: { type: 'string', description: '项目名。' },
       root: { type: 'string', description: '工作目录。' },
-    },
+    }),
     output: output(),
     async execute(args) {
       const c = ctxOf(args || {});
@@ -367,12 +383,12 @@ export function apply(ctx, config = {}) {
       '取某一章的写作契约（九段：视角/在场/称呼/知情/世界规则/时间线/禁忌/不确定/锚点；有本作设定时最前面多一段【本作】，'
       + '本作优先于原著），由 canon 确定性编译，不接受自由发挥。chapter=ch002 取单章；chapter=all 列出各章摘要。'
       + '写这一章之前必须先把契约读进来。',
-    parameters: {
+    parameters: parameterSchema({
       chapter: { type: 'string', required: true, description: '章 id，如 ch002；all 表示全部。' },
       source: { type: 'string', enum: ['fixture', 'canon'], description: '数据源：fixture（夹具，默认）或 canon（已导入的项目）。' },
       project: { type: 'string', description: '项目名。' },
       root: { type: 'string', description: '工作目录。' },
-    },
+    }),
     output: output(),
     async execute(args) {
       const loaded = await canonOf(args || {}, args?.source);
@@ -412,7 +428,7 @@ export function apply(ctx, config = {}) {
       + '未声明私设、20 字复制、契约遗漏。text 或 file 二选一，chapter 指定场景。返回每条 finding 的'
       + '「在哪、凭什么、跟哪条设定冲突」；作者登记过的本作设定会放过同类 finding，并在 suppressed 里列出，'
       + '不改稿、不评分。',
-    parameters: {
+    parameters: parameterSchema({
       chapter: { type: 'string', required: true, description: '章 id，如 ch004。' },
       text: { type: 'string', description: '要检查的正文（不必带【标签】行）。' },
       file: { type: 'string', description: '或从本地文件读取。' },
@@ -420,7 +436,7 @@ export function apply(ctx, config = {}) {
       source: { type: 'string', enum: ['fixture', 'canon'], description: '数据源：fixture（夹具，默认）或 canon（已导入的项目）。' },
       project: { type: 'string', description: '项目名。' },
       root: { type: 'string', description: '工作目录。' },
-    },
+    }),
     output: output(),
     async execute(args) {
       let raw = String(args?.text || '');
@@ -474,7 +490,7 @@ export function apply(ctx, config = {}) {
       + '它不是契约、不是 canon、不是 beat 的决策账本：只落 project/chapters/<章>/mission.json，'
       + '删掉不影响契约编译；唯一进契约的地方是 openQuestions（进「不确定」段）。'
       + '字段都可选，三行也算一张卡。',
-    parameters: {
+    parameters: parameterSchema({
       chapter: { type: 'string', required: true, description: '章 id，如 ch002' },
       action: { type: 'string', enum: ['get', 'set', 'clear'], description: '默认 get' },
       title: { type: 'string', description: '这一章的一句话标题' },
@@ -492,7 +508,7 @@ export function apply(ctx, config = {}) {
       source_chapter: { type: 'string', description: '对应原著章（本作章 ≠ 原著章，可不同）' },
       project: { type: 'string', description: '项目名' },
       root: { type: 'string', description: '工作目录' },
-    },
+    }),
     output: output(),
     async execute(args) {
       const c = ctxOf(args || {});
@@ -557,7 +573,7 @@ export function apply(ctx, config = {}) {
     description:
       '在已导入的原著里检索能支撑写作的原文片段：返回章节、偏移、原句与命中理由。用它核对「这个人叫什么、'
       + '这里发生过什么」，不要凭记忆。entities 传人物/地名可提高命中精度。',
-    parameters: {
+    parameters: parameterSchema({
       question: { type: 'string', required: true, description: '要查的问题，或要核对的事实，如「裴照什么时候改口叫阿砚」。' },
       entities: { type: 'array', items: { type: 'string' }, description: '相关实体（人物名、地点），可选。' },
       chapter_range: { type: 'array', items: { type: 'string' }, description: '限制章节范围，如 ["ch001","ch003"]，可选。' },
@@ -565,7 +581,7 @@ export function apply(ctx, config = {}) {
       source: { type: 'string', enum: ['fixture', 'canon'], description: '数据源：fixture（夹具，默认）或 canon（已导入的项目）。' },
       project: { type: 'string', description: '项目名。' },
       root: { type: 'string', description: '工作目录。' },
-    },
+    }),
     output: output(),
     async execute(args) {
       const { canon } = await canonOf(args || {}, args?.source);
