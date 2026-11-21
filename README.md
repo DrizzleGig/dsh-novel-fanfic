@@ -21,7 +21,16 @@
 导入原著 → 确认 canon → 声明本作设定 → 写一张章节任务卡 → 编译场景契约 → 在工作区写 → 检查 → 登记改动
 ```
 
-## 这个版本（v0.2.0）
+## v0.2.1 修复：0.2.0 会让 DSH 的所有对话返回 400
+
+**如果你装过 0.2.0 并执行过 `/fic on`，请升级到 0.2.1 并重启 DSH。** 0.2.0 里六个 `fic_*` 工具把内部参数表直接当
+JSON Schema 交给了宿主，而新增的 `fic_plan` 有个参数叫 `title`——它正好是 JSON Schema 的注解关键字。后果是开启同人工具后
+每条消息都失败（`Invalid schema for function 'fic_plan': … is not of type "string"`），而且 `/fic on` 会被记住，
+重启后**每个新会话**都中招，与是否在写同人无关。
+
+临时自救：在会话里 `/fic off`，然后**重启 DSH**（`/fic off` 只对当前进程生效）。升级到 0.2.1 则不需要这一步。
+
+## 这个版本（v0.2.1，功能面同 0.2.0）
 
 - **只读服务 `novelFanfic`**：`identity / getStatus / getRevision / getContract / getCanonSummary / onDidChange`。
   别的插件（舞台监督）能按能力读到「这一章的契约是哪一版」，不用猜。服务只读、永不读夹具。

@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v0.2.1（2026-11-21）
+
+### 修复：开启同人工作室后，DSH 里每条消息都返回 400
+
+- **现象**：装 0.2.0 并执行 `/fic on` 之后，会话里每条消息都失败：
+  `Invalid schema for function 'fic_plan': {"type":"string","description":"…"} is not of type "string"`
+  （`INVALID_REQUEST` / status 400）。`/fic on` 会把选择写进 `prefs.json`，**重启后每个新会话都会中招**，
+  与是否在写同人无关；`/fic off` 只对当前进程生效，必须重启 DSH 才恢复。
+- **根因**：六个 `fic_*` 工具把插件内部的「参数名 → 描述对象」表直接交给了 `ctx.tools.register()`。
+  这版 DSH 的 `register()` 收的是编译好的 JSON Schema（简写只对 `defineTool()` 生效），宿主原样透传给模型接口；
+  `fic_plan` 新增的参数名 `title` 是 JSON Schema 的注解关键字（值必须是字符串），整份工具定义因此被拒。
+  0.1.0 是同样的写法，但没有参数名踩到保留字，所以只是「模型看不到参数说明」，不会 400。
+- **修复**：`index.js` 新增 `parameterSchema()`，六个工具统一编译成
+  `{type:'object', properties, required:[参数名]}`；新增两条回归用例（完整 JSON Schema、参数表不得顶到 schema 根）。
+- **验证**：`node --test` 172/172；`npm run check`；用 DSH 安装包自带的 `assertSupportedJsonSchema`
+  逐个验证 6 个工具的 `parameters` 与 `output.schema`，6/6 通过。
+- **影响面**：只改工具定义的形状，不动 canon / 契约 / 面板 / 存储格式；已导入的项目不需要迁移。
+
 ## v0.2.0（2026-11-21）
 
 ### 新增：只读服务 `novelFanfic`
