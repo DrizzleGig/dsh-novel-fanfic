@@ -1,4 +1,4 @@
-// DSH 插件入口：把 canon / 契约编译器 / 检查器 / lookup 接成 fic_* 工具。
+﻿// DSH 插件入口：把 canon / 契约编译器 / 检查器 / lookup 接成 fic_* 工具。
 // 默认关闭：工具注册时带 when，只有在本会话执行过 `/fic on` 之后才可见。
 // 设计约束见 docs/小说插件系列-fanfic-v0.1.0-步骤1-验收.md 与 README「插件」小节。
 
@@ -116,13 +116,19 @@ export function apply(ctx, config = {}) {
     if (!agent) return '';
     return agent.session?.id ?? agent.id ?? '';
   };
-  /** 舞台监督接管：conductor 开着时，本会话也能用 fic_*（不改自己的持久偏好）。 */
-  const drivenBy = (agent) => {
-    const key = keyOf(agent);
+  /** 装了 conductor 它就是总开关：只看它接管没接管，本插件自己的 /fic on 降级为独立模式的偏好。 */
+  const conductorInstalled = () => {
+    try {
+      return typeof ctx.get?.('novelConductor')?.isDriving === 'function';
+    } catch {
+      return false;
+    }
+  };
+  const effectiveOn = (manualOn, key) => {
+    if (!conductorInstalled()) return manualOn;
     if (!key) return false;
     try {
-      const conductor = ctx.get?.('novelConductor');
-      return conductor?.isDriving?.(key) === true;
+      return ctx.get('novelConductor').isDriving(key) === true;
     } catch {
       return false;
     }
@@ -319,7 +325,7 @@ export function apply(ctx, config = {}) {
       }
       return ok(lines.join('\n'));
     },
-  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
+  }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
 
   // ── 工具 2：原著导入 / 读取 ────────────────────────────────────────────────
   ctx.tools.register({
@@ -385,7 +391,7 @@ export function apply(ctx, config = {}) {
       }
       return fail(`未知 action：${action}`);
     },
-  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
+  }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
 
   // ── 工具 3：场景契约 ───────────────────────────────────────────────────────
   ctx.tools.register({
@@ -429,7 +435,7 @@ export function apply(ctx, config = {}) {
         source: loaded.source,
       };
     },
-  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
+  }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
 
   // ── 工具 4：写作前/后的约束检查 ───────────────────────────────────────────
   ctx.tools.register({
@@ -491,7 +497,7 @@ export function apply(ctx, config = {}) {
         waived: result.waived || [],
       };
     },
-  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
+  }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
 
   // ── 工具 5：章节任务卡（v0.2.0 新增功能）────────────────────────────────────
   ctx.tools.register({
@@ -576,7 +582,7 @@ export function apply(ctx, config = {}) {
         revision: committed.revision,
       };
     },
-  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
+  }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
 
   // ── 工具 6：原文检索 ──────────────────────────────────────────────────────
   ctx.tools.register({
@@ -609,7 +615,7 @@ export function apply(ctx, config = {}) {
         .join('\n');
       return ok(`覆盖：${result.coverage}${result.note ? `（${result.note}）` : ''}\n${body || '没有命中，换个问法或补实体。'}`);
     },
-  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
+  }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
 
   // 侧边栏总览的数据源：一次取齐夹具统计 + canon 计数 + 契约漂移。
   async function statusSnapshot(args = {}, key = '') {
