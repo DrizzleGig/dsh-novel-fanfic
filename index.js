@@ -116,6 +116,17 @@ export function apply(ctx, config = {}) {
     if (!agent) return '';
     return agent.session?.id ?? agent.id ?? '';
   };
+  /** 舞台监督接管：conductor 开着时，本会话也能用 fic_*（不改自己的持久偏好）。 */
+  const drivenBy = (agent) => {
+    const key = keyOf(agent);
+    if (!key) return false;
+    try {
+      const conductor = ctx.get?.('novelConductor');
+      return conductor?.isDriving?.(key) === true;
+    } catch {
+      return false;
+    }
+  };
   const isOn = (agent) => {
     const key = keyOf(agent);
     if (!key) return false;
@@ -308,7 +319,7 @@ export function apply(ctx, config = {}) {
       }
       return ok(lines.join('\n'));
     },
-  }, { when: (context) => isOn(context.agent) });
+  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
 
   // ── 工具 2：原著导入 / 读取 ────────────────────────────────────────────────
   ctx.tools.register({
@@ -374,7 +385,7 @@ export function apply(ctx, config = {}) {
       }
       return fail(`未知 action：${action}`);
     },
-  }, { when: (context) => isOn(context.agent) });
+  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
 
   // ── 工具 3：场景契约 ───────────────────────────────────────────────────────
   ctx.tools.register({
@@ -418,7 +429,7 @@ export function apply(ctx, config = {}) {
         source: loaded.source,
       };
     },
-  }, { when: (context) => isOn(context.agent) });
+  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
 
   // ── 工具 4：写作前/后的约束检查 ───────────────────────────────────────────
   ctx.tools.register({
@@ -480,7 +491,7 @@ export function apply(ctx, config = {}) {
         waived: result.waived || [],
       };
     },
-  }, { when: (context) => isOn(context.agent) });
+  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
 
   // ── 工具 5：章节任务卡（v0.2.0 新增功能）────────────────────────────────────
   ctx.tools.register({
@@ -565,7 +576,7 @@ export function apply(ctx, config = {}) {
         revision: committed.revision,
       };
     },
-  }, { when: (context) => isOn(context.agent) });
+  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
 
   // ── 工具 6：原文检索 ──────────────────────────────────────────────────────
   ctx.tools.register({
@@ -598,7 +609,7 @@ export function apply(ctx, config = {}) {
         .join('\n');
       return ok(`覆盖：${result.coverage}${result.note ? `（${result.note}）` : ''}\n${body || '没有命中，换个问法或补实体。'}`);
     },
-  }, { when: (context) => isOn(context.agent) });
+  }, { when: (context) => isOn(context.agent) || drivenBy(context.agent) });
 
   // 侧边栏总览的数据源：一次取齐夹具统计 + canon 计数 + 契约漂移。
   async function statusSnapshot(args = {}, key = '') {
