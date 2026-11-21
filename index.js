@@ -1403,6 +1403,10 @@ export function apply(ctx, config = {}) {
       if (arg === 'plan') {
         const sub = String(words[1] || 'list').toLowerCase();
         const chapter = String(words[2] || '').trim();
+        // 总开关语义：故事总控关着时，任务卡只能读不能写（面板与命令行同一道门）。
+        if (sub !== 'get' && sub !== 'list' && conductorInstalled() && !effectiveOn(false, key)) {
+          return { kind: 'error', text: '故事总控关着：任务卡不能改（读可以）；先 /cue on 再改。' };
+        }
         return (async () => {
           const c = ctxOf(scope());
           if (sub === 'list') {
