@@ -9,10 +9,13 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import os from 'node:os';
 import { loadFixture } from './lib/canon.mjs';
 import { loadProjectCanon } from './lib/canon-adapter.mjs';
-import { runCheck, formatFindings, GATE_DETECTORS } from './lib/checker.mjs';
+import { runCheck, formatFindings, applyWaivers, GATE_DETECTORS } from './lib/checker.mjs';
 import { retrieve } from './lib/lookup.mjs';
 import { compileContract, compileAll, contractDrift } from './lib/compiler.mjs';
-import { loadProject, chapterBody, paths, readJson, writeJsonAtomic, saveCanon, audit, CANON_FILES } from './lib/canon-store.mjs';
+import { loadProject, chapterBody, paths, readJson, writeJsonAtomic, saveCanon, audit, CANON_FILES, commitProject, readRevision } from './lib/canon-store.mjs';
+import { buildExports } from './lib/exports.mjs';
+import { createService } from './lib/service.mjs';
+import { loadMission, loadMissions, saveMission, clearMission, describeMission } from './lib/mission.mjs';
 import { ingestFile, readSourceText, splitChapters, bookTitleOf, MAX_BYTES } from './lib/ingest.mjs';
 import { sha256 } from './lib/hash.mjs';
 import { confirmEntries, rejectEntries, resolveContradiction } from './lib/proposals.mjs';
@@ -119,23 +122,96 @@ export function apply(ctx, config = {}) {
     };
   };
 
+  // ── 版本、提交点与事件（v0.2.0）────────────────────────────────────────────
+  // project.json.revision 是唯一的账本版本：任何改变 canon/本作/私设/忽略/原著的写操作 +1。
+  // 提交点只有一个：commitWrite()。它同时刷新 project.json.exports（给 voice 读的派生块），
+  // 写盘成功之后才发事件（先落盘、后事件；失败不发）。
+  const PLUGIN_VERSION = (() => {
+    try {
+      return JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version || '0.0.0';
+    } catch {
+      return '0.0.0';
+    }
+  })();
+  const changeListeners = new Set();
+  function subscribeChange(listener) {
+    if (typeof listener !== 'function') return () => {};
+    changeListeners.add(listener);
+    return () => changeListeners.delete(listener);
+  }
+  function emitChange(payload) {
+    for (const listener of [...changeListeners]) {
+      try {
+        listener(payload);
+      } catch {
+        // 订阅方抛错不影响已经提交的写。
+      }
+    }
+  }
+
+  /**
+   * 提交一次项目写入：revision +1、刷新 exports、发事件。
+   * @param {{root: string, project: string}} c
+   * @param {{kind?: string, canon?: object|null}} options key 用来区分事件种类
+   */
+  async function commitWrite(c, options = {}) {
+    const kind = String(options.kind || 'canon');
+    let declarations = null;
+    try {
+      declarations = await loadDeclarations(declarationFile(paths(c.root, c.project).dir));
+    } catch {
+      declarations = null;
+    }
+    let canon = options.canon || null;
+    if (!canon) {
+      try {
+        canon = (await loadProject(c.root, c.project)).canon;
+      } catch {
+        canon = {};
+      }
+    }
+    const committed = await commitProject(c.root, c.project, options.patch || {}, {
+      exports: (revision) => buildExports({ canon, declarations, revision }),
+    });
+    emitChange({ project: c.project, revision: committed.revision, at: committed.updatedAt, kind });
+    return committed;
+  }
+
   const text = (value) => ({ type: 'text', text: String(value) });
   const ok = (body) => ({ ok: true, text: String(body) });
   const fail = (body) => ({ ok: false, text: String(body) });
 
+  // 工具返回值除了渲染用的 {ok,text}，还可以带结构化字段（status/pass/revision/findings…）：
+  // schema 用 additionalProperties 放开，render 只取 text——模型看到人话，
+  // conductor 的 tools/result 收据拿到结构化值。beat 的 beat_verify 也是这个做法。
   const output = (render) => ({
-    schema: { type: 'object', properties: { ok: { type: 'boolean' }, text: { type: 'string' } } },
+    schema: {
+      type: 'object',
+      additionalProperties: true,
+      properties: { ok: { type: 'boolean' }, text: { type: 'string' } },
+    },
     render: (_args, value) => [text(value?.text ?? '')],
   });
 
-  // 数据源：fixture（夹具实验用，默认）或 canon（.dsh-novel-fanfic/<project>/，导入的原著）。
+  // 数据源：fixture（夹具实验用）或 canon（.dsh-novel-fanfic/<project>/，导入的原著）。
+  // v0.2.0 起把 revision / source 一起带出来，工具返回值里要报「这是哪一版」。
   async function canonOf(args, source) {
     const c = ctxOf(args || {});
-    if (String(source || 'fixture') === 'canon') {
-      const { canon } = await loadProjectCanon(c.root, c.project);
-      return { ...c, canon, source: 'canon' };
+    if (String(source) === 'canon') {
+      const loaded = await loadProjectCanon(c.root, c.project);
+      return {
+        ...c,
+        canon: { ...loaded.canon, source: 'canon' },
+        source: 'canon',
+        revision: Number.isInteger(loaded.project?.revision) ? loaded.project.revision : null,
+      };
     }
-    return { ...c, canon: await loadFixture(c.fixtureDir), source: 'fixture' };
+    return {
+      ...c,
+      canon: { ...(await loadFixture(c.fixtureDir)), source: 'fixture' },
+      source: 'fixture',
+      revision: null,
+    };
   }
 
   async function fixtureOf(args) {
@@ -299,18 +375,32 @@ export function apply(ctx, config = {}) {
     },
     output: output(),
     async execute(args) {
-      const { canon } = await canonOf(args || {}, args?.source);
+      const loaded = await canonOf(args || {}, args?.source);
+      const canon = loaded.canon;
       const chapter = String(args?.chapter || '');
       if (chapter === 'all') {
         const rows = compileAll(canon).map(
           (c) => `${c.chapter}：${c.chars} 字，视角 ${canon.sceneById?.[c.id]?.pov || '-'}，sha1 ${c.hash.slice(0, 8)}`,
         );
-        return ok(rows.join('\n'));
+        return { ...ok(rows.join('\n')), status: 'completed', revision: loaded.revision, chapters: compileAll(canon).length };
       }
       const scene = canon.scenes.find((s) => s.chapter === chapter || s.id === chapter);
       if (!scene) return fail(`没有这一章的契约：${chapter}（可用 ${canon.scenes.map((s) => s.chapter).join('、')}）`);
       const compiled = compileContract(scene, canon);
-      return ok(compiled.markdown);
+      return {
+        ...ok(compiled.markdown),
+        status: 'completed',
+        code: null,
+        chapter: scene.chapter,
+        scene: scene.id,
+        chars: compiled.chars,
+        hash: compiled.hash,
+        // sections 就是编译器内部那份 tags（markdown 由它渲染，段之和 = 全文天然成立）
+        sections: compiled.tags,
+        sectionOrder: Object.keys(compiled.tags),
+        revision: loaded.revision,
+        source: loaded.source,
+      };
     },
   }, { when: (context) => isOn(context.agent) });
 
@@ -339,19 +429,129 @@ export function apply(ctx, config = {}) {
         raw = await readFile(path.resolve(c.root, String(args.file)), 'utf8');
       }
       if (!raw.trim()) return fail('fic_check 需要 text 或 file。');
-      const { canon } = await canonOf(args || {}, args?.source);
+      const loaded = await canonOf(args || {}, args?.source);
+      const canon = loaded.canon;
       const chapter = String(args?.chapter || '');
       const scene = canon.scenes.find((s) => s.chapter === chapter || s.id === chapter);
       if (!scene) return fail(`没有这一章的 canon 场景：${chapter}`);
-      const result = runCheck(raw, scene, canon, { arm: String(args?.arm || 'C') });
+      const checked = runCheck(raw, scene, canon, { arm: String(args?.arm || 'C') });
+      // waiver 在服务端应用（v0.1 只在面板里过滤，导致 conductor 看到的 pass 与作者看到的不一致）
+      let waivers = [];
+      try {
+        const { list } = await waiversOf(args || {});
+        waivers = list;
+      } catch {
+        waivers = [];
+      }
+      const result = applyWaivers(checked, waivers, scene.chapter);
       const gate = result.findings.filter((f) => GATE_DETECTORS.includes(f.detector));
       const head = `必检 5 类：${gate.length} 条｜blocker ${result.summary.blockers}｜warning ${result.summary.warnings}`
-        + `｜info ${result.summary.infos}｜本作放过 ${result.summary.suppressed || 0} 条`;
-      return ok(`${head}\n${formatFindings(result)}`);
+        + `｜info ${result.summary.infos}｜本作放过 ${result.summary.suppressed || 0} 条`
+        + (result.summary.waived ? `｜作者忽略 ${result.summary.waived} 条` : '');
+      return {
+        ...ok(`${head}\n${formatFindings(result)}`),
+        // 执行成功（status）与检查通过（pass）分开：检查不通过时 status 仍是 completed
+        status: 'completed',
+        code: null,
+        pass: result.summary.blockers === 0,
+        chapter: scene.chapter,
+        scene: scene.id,
+        revision: loaded.revision,
+        source: loaded.source,
+        summary: result.summary,
+        findings: result.findings,
+        suppressed: result.suppressed || [],
+        waived: result.waived || [],
+      };
     },
   }, { when: (context) => isOn(context.agent) });
 
-  // ── 工具 5：原文检索 ──────────────────────────────────────────────────────
+  // ── 工具 5：章节任务卡（v0.2.0 新增功能）────────────────────────────────────
+  ctx.tools.register({
+    name: 'fic_plan',
+    description:
+      '章节任务卡：写之前想清楚「这一章要干什么」。action=get 读、set 写（只覆盖传了的字段）、clear 删。'
+      + '它不是契约、不是 canon、不是 beat 的决策账本：只落 project/chapters/<章>/mission.json，'
+      + '删掉不影响契约编译；唯一进契约的地方是 openQuestions（进「不确定」段）。'
+      + '字段都可选，三行也算一张卡。',
+    parameters: {
+      chapter: { type: 'string', required: true, description: '章 id，如 ch002' },
+      action: { type: 'string', enum: ['get', 'set', 'clear'], description: '默认 get' },
+      title: { type: 'string', description: '这一章的一句话标题' },
+      pov: { type: 'string', description: '视角人物' },
+      placeTime: { type: 'string', description: '时间地点' },
+      goal: { type: 'string', description: '本章要干成什么（一句话）' },
+      arc: { type: 'string', description: '情绪曲线，如「提防 → 松动 → 冷下去」' },
+      reader_expectation: { type: 'string', description: '本章满足/延迟/颠覆哪个读者期待' },
+      anchors: { type: 'array', items: { type: 'string' }, description: '原著锚点（可引用的场景/台词），最多 10 条' },
+      beats: { type: 'array', items: { type: 'string' }, description: '关键节拍，最多 7 条' },
+      avoid: { type: 'array', items: { type: 'string' }, description: '本章要避开的雷点（作者自己定的）' },
+      open_questions: { type: 'array', items: { type: 'string' }, description: '写之前要拍板的开放问题；会进契约的「不确定」段' },
+      target_chars: { type: 'integer', description: '目标字数' },
+      status: { type: 'string', enum: ['draft', 'ready', 'done'], description: '作者自己的状态，插件不判' },
+      source_chapter: { type: 'string', description: '对应原著章（本作章 ≠ 原著章，可不同）' },
+      project: { type: 'string', description: '项目名' },
+      root: { type: 'string', description: '工作目录' },
+    },
+    output: output(),
+    async execute(args) {
+      const c = ctxOf(args || {});
+      const chapter = String(args?.chapter || '').trim();
+      if (!chapter) return fail('fic_plan 需要 chapter');
+      const action = String(args?.action || 'get');
+      if (action === 'get') {
+        const mission = await loadMission(c.root, c.project, chapter);
+        const revision = await readRevision(c.root, c.project);
+        return {
+          ...ok(describeMission(mission)),
+          status: 'completed',
+          chapter,
+          mission,
+          hasMission: Boolean(mission),
+          revision: revision.revision,
+        };
+      }
+      if (action === 'clear') {
+        await clearMission(c.root, c.project, chapter);
+        const committed = await commitWrite(c, { kind: 'mission' });
+        return {
+          ...ok(`已删除 ${chapter} 的任务卡（契约仍可编译，只是不再注入意图）`),
+          status: 'completed',
+          chapter,
+          mission: null,
+          hasMission: false,
+          revision: committed.revision,
+        };
+      }
+      const mission = await saveMission(c.root, c.project, chapter, {
+        title: args?.title,
+        pov: args?.pov,
+        placeTime: args?.placeTime,
+        goal: args?.goal,
+        arc: args?.arc,
+        readerExpectation: args?.reader_expectation,
+        anchors: args?.anchors,
+        beats: args?.beats,
+        avoid: args?.avoid,
+        openQuestions: args?.open_questions,
+        targetChars: args?.target_chars,
+        status: args?.status,
+        sourceChapter: args?.source_chapter,
+        canonRevision: (await readRevision(c.root, c.project)).revision,
+      });
+      const committed = await commitWrite(c, { kind: 'mission' });
+      return {
+        ...ok(describeMission(mission)),
+        status: 'completed',
+        chapter,
+        mission,
+        hasMission: true,
+        revision: committed.revision,
+      };
+    },
+  }, { when: (context) => isOn(context.agent) });
+
+  // ── 工具 6：原文检索 ──────────────────────────────────────────────────────
   ctx.tools.register({
     name: 'fic_lookup',
     description:
@@ -445,8 +645,10 @@ export function apply(ctx, config = {}) {
       title: null, currentChapter: null, chapters: [], pending: [], contradictions: [], waivers: [], declarations: null,
       deltas: emptyDeltas(), book: null,
     };
+    // loaded 必须在 try 外声明：后面的 revision / exports / beat 摘要都要用它。
+    let loaded = null;
     try {
-      const loaded = await loadProject(c.root, c.project);
+      loaded = await loadProject(c.root, c.project);
       out.currentChapter = loaded.project.currentChapter || null;
       out.title = loaded.project.title || null;
       out.chapters = (loaded.index?.chapters || []).map((ch) => ({
@@ -508,7 +710,81 @@ export function apply(ctx, config = {}) {
     } catch (error) {
       out.error = String(error?.message || error);
     }
+    // v0.2.0 面板新增：版本号、任务卡、兄弟插件只读摘要（beat 的本章拍板）。
+    // loaded 可能是 null（loadProject 抛错：项目不存在/JSON 坏了）——每一项都要能自己降级。
+    try {
+      out.revision = loaded.project.revision;
+      out.revisionDrift = Boolean(loaded.project.revDrift);
+    } catch {
+      out.revision = null;
+    }
+    try {
+      out.missions = await loadMissions(c.root, c.project);
+    } catch {
+      out.missions = {};
+    }
+    try {
+      out.exports = loaded.project.exports || null;
+    } catch {
+      out.exports = null;
+    }
+    try {
+      out.beat = await readBeatSummary(c.root, out.title || (loaded && loaded.project.title) || c.project);
+    } catch {
+      out.beat = { available: false, reason: 'read-failed' };
+    }
     return out;
+  }
+
+  /**
+   * 只读读 beat 的账本摘要（不 import、不写、不订阅）：
+   * 作者在 fanfic 里能看到「这一章已经拍过什么板」，就不会重复登记同一件事。
+   * beat 没装 / 没账本 → available:false，面板整块不显示（不是显示空）。
+   *
+   * 归属靠书名：先按 fanfic 项目标题匹配 beat 的书目录/书名；只有一本书时直接用它；
+   * 多本且匹配不上就报歧义，不猜。
+   */
+  async function readBeatSummary(root, titleHint) {
+    const base = path.join(root, '.dsh-novel-beat');
+    let entries = [];
+    try {
+      entries = await readdir(base, { withFileTypes: true });
+    } catch {
+      return { available: false, reason: 'no-beat' };
+    }
+    const books = [];
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      let book = null;
+      try {
+        book = await readJson(path.join(base, entry.name, 'book.json'), null);
+      } catch {
+        continue;
+      }
+      if (!book) continue;
+      books.push({ dir: entry.name, book });
+    }
+    if (!books.length) return { available: false, reason: 'no-book' };
+    const hint = String(titleHint || '').trim();
+    let picked = null;
+    if (hint) {
+      picked = books.find((row) => {
+        const title = String(row.book.title || row.dir);
+        return title.includes(hint) || hint.includes(title) || row.dir === hint;
+      }) || null;
+    }
+    if (!picked && books.length === 1) picked = books[0];
+    if (!picked) return { available: false, reason: 'ambiguous', books: books.map((row) => row.book.title || row.dir).slice(0, 5) };
+    const decisions = Array.isArray(picked.book.decisions) ? picked.book.decisions : [];
+    return {
+      available: true,
+      book: String(picked.book.title || picked.dir),
+      chapter: picked.book.currentChapter ?? null,
+      decided: decisions.filter((row) => row.status === 'decided').length,
+      open: decisions.filter((row) => row.status !== 'decided' && row.status !== 'cancelled').length,
+      recent: decisions.slice(-5).map((row) => ({ id: row.id, title: String(row.title || '').slice(0, 60), status: row.status })),
+      revision: Number.isInteger(picked.book.revision) ? picked.book.revision : null,
+    };
   }
 
   async function applyReview(action, args = {}) {
@@ -519,6 +795,7 @@ export function apply(ctx, config = {}) {
     const done = action === 'confirm' ? confirmEntries(canon, ids) : rejectEntries(canon, ids);
     await saveCanon(c.root, c.project, canon);
     await audit(c.root, c.project, { action: `canon.${action}`, ids: done });
+    await commitWrite(c, { kind: 'canon', canon });
     return done;
   }
 
@@ -679,6 +956,7 @@ export function apply(ctx, config = {}) {
     };
     await writeJsonAtomic(file, [...list, record]);
     await audit(c.root, c.project, { action: 'finding.waive', id: record.id, chapter, code });
+    await commitWrite(c, { kind: 'waiver' });
     return record;
   }
 
@@ -688,6 +966,7 @@ export function apply(ctx, config = {}) {
     if (next.length === list.length) throw new Error(`没有这条忽略记录：${id}`);
     await writeJsonAtomic(file, next);
     await audit(c.root, c.project, { action: 'finding.unwaive', id });
+    await commitWrite(c, { kind: 'waiver' });
     return true;
   }
 
@@ -722,7 +1001,7 @@ export function apply(ctx, config = {}) {
     description: '同人工作室：/fic on 启用 fic_* 工具，/fic off 收起，/fic status 看状态。',
     // 带参数的命令必须声明 input：DSH 客户端只对「裸命令」直接执行，
     // 声明 input 后 `/fic on` 才会走 claim → execute，而不是被当成普通消息发给模型。
-    input: { hint: 'on | off | status [--json] | projects | use <项目> | panel | chapters | chapter <id> | contract <章> | search <词> | preview <file> | pickdir | files <目录> | check <章> --text <编码> | delta list|add|remove|premise … | declare list|au|headcanon|typo … | waive <章> <detector/code> --quote <q> --reason <r> | unwaive <wv_id> | review | confirm <ids> | reject <ids> | resolve <fc> <choice> | import <file>（都可带 --project <项目>）' },
+    input: { hint: 'on | off | status [--json] | projects | use <项目> | panel | chapters | chapter <id> | contract <章> | search <词> | preview <file> | pickdir | files <目录> | check <章> --text <编码> | plan list|get|set|clear <章> … | delta list|add|remove|premise … | declare list|au|headcanon|typo … | waive <章> <detector/code> --quote <q> --reason <r> | unwaive <wv_id> | review | confirm <ids> | reject <ids> | resolve <fc> <choice> | import <file>（都可带 --project <项目>）' },
     handler(invocation) {
       const key = keyOf(invocation?.agent);
       const parts = String(invocation?.rawInput || '').trim().split(/\s+/).filter(Boolean);
@@ -930,11 +1209,20 @@ export function apply(ctx, config = {}) {
               if (/项目不存在|还没有导入/.test(String(error?.message || error))) return canonOf(scope(), 'fixture');
               throw error;
             });
-        return loadSource.then((c) => {
+        return loadSource.then(async (c) => {
           const scene = c.canon.scenes.find((s) => s.chapter === chapter || s.id === chapter);
           if (!scene) return { kind: 'error', text: `没有 ${chapter} 这一章的契约场景（source=${c.source}）` };
-          const result = runCheck(text, scene, c.canon, { arm: 'C' });
+          const checked = runCheck(text, scene, c.canon, { arm: 'C' });
+          // 与 fic_check 工具同一口径：waiver 在服务端先应用，面板看到的与 conductor 看到的一致。
+          let waivers = [];
+          try {
+            waivers = (await waiversOf(scope())).list;
+          } catch {
+            waivers = [];
+          }
+          const result = applyWaivers(checked, waivers, scene.chapter);
           const summary = result.summary || {};
+          // 面板继续拿 findings（未放过的）+ suppressed（本作放过）+ waived（作者放过）。
           const findings = (result.findings || []).map((f) => ({
             detector: f.detector,
             code: f.code,
@@ -956,15 +1244,26 @@ export function apply(ctx, config = {}) {
             canonRef: f.canonRef || null,
             suppressedBy: f.suppressedBy || null,
           }));
+          const waived = (result.waived || []).map((f) => ({
+            detector: f.detector,
+            code: f.code,
+            severity: f.severity,
+            quote: clamp(f.quote || '', 160),
+            offset: Number.isFinite(f.offset) ? f.offset : null,
+            why: f.why || '',
+            waivedBy: f.waivedBy || null,
+          }));
           const payload = {
             ok: true, source: c.source, chapter, tag: result.tag || null, chars: result.chars || 0,
-            gate: GATE_DETECTORS, summary, findings, suppressed,
+            gate: GATE_DETECTORS, summary, findings, suppressed, waived,
           };
           if (json) return { kind: 'success', text: JSON.stringify(payload) };
           const lines = [`必检 5 类：${(summary.gateFindings ?? 0)} 条｜blocker ${summary.blockers ?? 0}｜warning ${summary.warnings ?? 0}｜info ${summary.infos ?? 0}`];
           if (suppressed.length) lines.push(`本作设定放过 ${suppressed.length} 条（不按原著报）`);
+          if (waived.length) lines.push(`作者忽略 ${waived.length} 条（已写理由，可撤销）`);
           for (const f of findings) lines.push(`[${f.severity}] ${f.detector}/${f.code}　${f.quote}${f.why ? `\n    ${f.why}` : ''}`);
           for (const f of suppressed) lines.push(`[放过] ${f.detector}/${f.code}　${f.quote}（按「${f.suppressedBy?.title || '本作设定'}」）`);
+          for (const f of waived) lines.push(`[已忽略] ${f.detector}/${f.code}　${f.quote}（理由：${f.waivedBy?.reason || '（未写）'}）`);
           return { kind: 'success', text: lines.join('\n') };
         }).catch((error) => ({ kind: 'error', text: String(error?.message || error) }));
       }
@@ -1008,6 +1307,7 @@ export function apply(ctx, config = {}) {
           }
           await saveDeltas(file, next);
           await audit(c.root, c.project, { action: 'delta.update', sub });
+          await commitWrite(c, { kind: 'deltas' });
           return {
             kind: 'success',
             text: json ? JSON.stringify({ ok: true, ...next }) : `${message}；现在本作设定 ${next.items.length} 条`,
@@ -1059,11 +1359,97 @@ export function apply(ctx, config = {}) {
           }
           await saveDeclarations(file, next);
           await audit(c.root, c.project, { action: 'declaration.update', kind, remove: remove || null });
+          await commitWrite(c, { kind: 'declarations' });
           return {
             kind: 'success',
             text: json ? JSON.stringify({ ok: true, ...next }) : `${message}；现在 AU ${next.auRules.length} / 私设 ${next.headcanonSignatures.length} / 错名 ${Object.keys(next.typos).length}`,
           };
         })().catch((error) => ({ kind: 'error', text: String(error?.message || error) }));
+      }
+      // —— 章节任务卡（v0.2.0）：面板与 CLI 都走这一条 ——
+      if (arg === 'plan') {
+        const sub = String(words[1] || 'list').toLowerCase();
+        const chapter = String(words[2] || '').trim();
+        return (async () => {
+          const c = ctxOf(scope());
+          if (sub === 'list') {
+            const missions = await loadMissions(c.root, c.project);
+            const revision = await readRevision(c.root, c.project);
+            if (json) return { kind: 'success', text: JSON.stringify({ ok: true, project: c.project, revision: revision.revision, missions }) };
+            const rows = Object.values(missions);
+            return {
+              kind: 'success',
+              text: rows.length
+                ? rows.map((m) => `${m.chapter}${m.title ? `　${m.title}` : ''}　${m.beats.length} 节拍　${m.status}`).join('\n')
+                : '还没有任何章节任务卡。用 /fic plan set <章> --goal <一句话> 开始。',
+            };
+          }
+          if (!chapter) return { kind: 'error', text: `用法：/fic plan ${sub} <章> …` };
+          if (sub === 'get') {
+            const mission = await loadMission(c.root, c.project, chapter);
+            const revision = await readRevision(c.root, c.project);
+            return {
+              kind: 'success',
+              text: json ? JSON.stringify({ ok: true, chapter, mission, revision: revision.revision }) : describeMission(mission),
+            };
+          }
+          if (sub === 'clear') {
+            await clearMission(c.root, c.project, chapter);
+            const committed = await commitWrite(c, { kind: 'mission' });
+            return {
+              kind: 'success',
+              text: json
+                ? JSON.stringify({ ok: true, chapter, mission: null, revision: committed.revision })
+                : `已删除 ${chapter} 的任务卡（契约仍可编译，只是不再注入意图）`,
+            };
+          }
+          if (sub === 'set') {
+            // 数组字段：面板用 U+001F 拼接（作者写「|」也不会被拆开）；手输时用「|」或换行都行。
+            const splitFlag = (name) => {
+              const raw = decodeFlag(name);
+              const sep = raw.includes('\u001f') ? '\u001f' : '|';
+              return raw.split(sep).map((s) => s.trim()).filter(Boolean);
+            };
+            const mission = await saveMission(c.root, c.project, chapter, {
+              title: decodeFlag('--title'),
+              pov: decodeFlag('--pov'),
+              placeTime: decodeFlag('--place-time'),
+              goal: decodeFlag('--goal'),
+              arc: decodeFlag('--arc'),
+              readerExpectation: decodeFlag('--reader'),
+              anchors: flagValue('--anchors') ? splitFlag('--anchors') : undefined,
+              beats: flagValue('--beats') ? splitFlag('--beats') : undefined,
+              avoid: flagValue('--avoid') ? splitFlag('--avoid') : undefined,
+              openQuestions: flagValue('--open') ? splitFlag('--open') : undefined,
+              targetChars: flagValue('--target-chars') ? Number(flagValue('--target-chars')) : undefined,
+              status: decodeFlag('--status') || undefined,
+              sourceChapter: decodeFlag('--source-chapter'),
+              canonRevision: (await readRevision(c.root, c.project)).revision,
+            });
+            const committed = await commitWrite(c, { kind: 'mission' });
+            return {
+              kind: 'success',
+              text: json
+                ? JSON.stringify({ ok: true, chapter, mission, revision: committed.revision })
+                : `${describeMission(mission)}\n（项目版本 v${committed.revision}）`,
+            };
+          }
+          throw new Error('用法：/fic plan list | get <章> | set <章> [--goal][--arc][--beats a|b][--open q1|q2]… | clear <章>');
+        })().catch((error) => ({ kind: 'error', text: String(error?.message || error) }));
+      }
+      // —— 派生导出块：升级到 0.2.0 后跑一次，让 voice 能读到禁忌/称呼 ——
+      if (arg === 'exports') {
+        const c = ctxOf(scope());
+        return commitWrite(c, { kind: 'exports' }).then((committed) => {
+          const forbidden = committed.project?.exports?.forbidden || [];
+          const addresses = committed.project?.exports?.addresses || [];
+          return {
+            kind: 'success',
+            text: json
+              ? JSON.stringify({ ok: true, project: c.project, revision: committed.revision, exports: committed.project?.exports || null })
+              : `已刷新 ${c.project} 的导出块：禁忌 ${forbidden.length} 条、称呼 ${addresses.length} 条（v${committed.revision}）`,
+          };
+        }).catch((error) => ({ kind: 'error', text: String(error?.message || error) }));
       }
       if (arg === 'waive') {
         const chapter = words[1] || '';
@@ -1113,7 +1499,10 @@ export function apply(ctx, config = {}) {
         return loadProject(c.root, c.project)
           .then(({ canon }) => {
             const fc = resolveContradiction(canon, id, choice);
-            return saveCanon(c.root, c.project, canon).then(() => audit(c.root, c.project, { action: 'canon.resolve', id, choice })).then(() => fc);
+            return saveCanon(c.root, c.project, canon)
+              .then(() => audit(c.root, c.project, { action: 'canon.resolve', id, choice }))
+              .then(() => commitWrite(c, { kind: 'canon', canon }))
+              .then(() => fc);
           })
           .then((fc) => ({ kind: 'success', text: `已裁决 ${fc.id}：${fc.resolution}（状态 ${fc.status}）` }))
           .catch((error) => ({ kind: 'error', text: String(error?.message || error) }));
@@ -1125,6 +1514,7 @@ export function apply(ctx, config = {}) {
         return ingestFile({ root: c.root, project: c.project, file })
           .then((result) => {
             // 导入成功后把这个项目设为当前项目：面板打开就是这本新书。
+            // revision 由 ingestFile 自己 +1（导入就是一次账本写入），这里不重复提交。
             if (!result.duplicate) savePreference({ project: c.project });
             return {
               kind: 'success',
@@ -1163,4 +1553,17 @@ export function apply(ctx, config = {}) {
       };
     },
   });
+
+  // ── 只读服务：novelFanfic（v0.2.0）──────────────────────────────────────────
+  // 与契约 §3 一致：只读、第一参数是绝对 cwd、永不读夹具、revision 与内容同快照。
+  const service = createService({ version: PLUGIN_VERSION, subscribe: subscribeChange });
+  if (typeof ctx.provide === 'function' && typeof ctx.effect === 'function') {
+    ctx.effect(() => ctx.provide('novelFanfic', service));
+  } else if (typeof ctx.provide === 'function') {
+    ctx.provide('novelFanfic', service);
+  } else {
+    // 老宿主没有 ctx.provide：不提供服务，也不要用直接赋值（Cordis 会抛
+    // "cannot set property without provide"，conductor 0.1.0 就踩过这个坑）。
+    ctx.logger?.warn?.('[novel-fanfic] 宿主没有 ctx.provide，novelFanfic 服务未注册（面板与工具不受影响）');
+  }
 }

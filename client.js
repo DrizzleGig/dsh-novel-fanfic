@@ -50,6 +50,126 @@ window.__ModuleLoader__.load({
       resolved: { label: '已裁决', tone: c.success },
     };
 
+    // ── 样式层（v0.2.0 重设计）────────────────────────────────────────────────
+    // 只为「新的骨架」服务：顶栏 / 下一步 / 一级 tab / chips / 卡片 / sheet / 任务卡。
+    // 颜色全部映射到宿主 token（hex 只是 fallback），深色跟随宿主，不自建开关。
+    const CORE_CSS = [
+      '.fic-panel{--fic-ink:var(--dsw-alias-label-primary,#1b2027);',
+      '--fic-ink2:var(--dsw-alias-label-secondary,#4a545f);',
+      '--fic-ink3:var(--dsw-alias-label-tertiary,#6f7a87);',
+      '--fic-line:var(--dsw-alias-border-l1,#e3e7ec);',
+      '--fic-line2:var(--dsw-alias-border-l2,#d3d9e1);',
+      '--fic-surface:var(--dsw-alias-bg-layer-1,#fff);',
+      '--fic-surface2:var(--dsw-alias-bg-layer-2,#f2f4f7);',
+      '--fic-surface3:var(--dsw-alias-bg-layer-3,#e9edf2);',
+      '--fic-brand:var(--dsw-alias-brand-primary,#3d5e8c);',
+      '--fic-onbrand:var(--dsw-alias-label-on-color,#fff);',
+      '--fic-ok:var(--dsw-alias-state-success-primary,#16805a);',
+      '--fic-warn:var(--dsw-alias-state-warn-primary,#9a6410);',
+      '--fic-bad:var(--dsw-alias-state-error-primary,#b23c40);}',
+      '.fic-panel *{box-sizing:border-box;}',
+      '.fic-head{padding:11px 14px 9px;background:var(--fic-surface);border-bottom:1px solid var(--fic-line);flex:none;}',
+      '.fic-head-row{display:flex;align-items:center;gap:8px;}',
+      '.fic-mark{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;',
+      'background:color-mix(in srgb,var(--fic-brand) 12%,var(--fic-surface2));color:var(--fic-brand);}',
+      '.fic-title{font-size:14.5px;font-weight:600;color:var(--fic-ink);letter-spacing:.01em;}',
+      '.fic-ver{font-family:Cascadia Mono,Consolas,ui-monospace,monospace;font-size:10.5px;color:var(--fic-ink3);',
+      'border:1px solid var(--fic-line2);border-radius:5px;padding:0 4px;line-height:16px;}',
+      '.fic-next{margin:10px 14px 0;padding:9px 11px;border-radius:12px;display:flex;align-items:flex-start;gap:9px;flex:none;',
+      'background:color-mix(in srgb,var(--fic-brand) 8%,var(--fic-surface));border:1px solid color-mix(in srgb,var(--fic-brand) 28%,var(--fic-line));}',
+      '.fic-next-kicker{font-family:Cascadia Mono,Consolas,monospace;font-size:9.5px;letter-spacing:.12em;',
+      'text-transform:uppercase;color:var(--fic-brand);margin-top:3px;flex:none;}',
+      '.fic-next-body{flex:1;min-width:0;}',
+      '.fic-next-title{font-size:12.5px;color:var(--fic-ink);line-height:1.5;}',
+      '.fic-next-title b{font-weight:600;}',
+      '.fic-next-why{display:block;font-size:11px;color:var(--fic-ink3);margin-top:1px;line-height:1.5;}',
+      '.fic-next .fic-btn{flex:none;}',
+      '.fic-btn{height:28px;padding:0 11px;border-radius:8px;border:1px solid var(--fic-line2);background:var(--fic-surface);',
+      'color:var(--fic-ink);font-size:12px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}',
+      '.fic-btn:hover{background:var(--fic-surface2);}',
+      '.fic-btn.primary{background:var(--fic-brand);border-color:var(--fic-brand);color:var(--fic-onbrand);font-weight:600;}',
+      '.fic-btn.ghost{background:transparent;border-color:transparent;color:var(--fic-ink3);}',
+      '.fic-btn.small{height:25px;padding:0 9px;font-size:11.5px;}',
+      '.fic-btn:disabled{opacity:.5;cursor:default;}',
+      '.fic-tabs{display:flex;gap:2px;padding:9px 14px 0;flex:none;border-bottom:1px solid var(--fic-line);}',
+      '.fic-tab{flex:1;height:33px;border:0;background:transparent;color:var(--fic-ink2);font-family:inherit;font-size:12.5px;',
+      'cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;border-bottom:2px solid transparent;padding:0;}',
+      '.fic-tab:hover{color:var(--fic-ink);}',
+      '.fic-tab[aria-selected="true"]{color:var(--fic-brand);font-weight:600;border-bottom-color:var(--fic-brand);}',
+      '.fic-tab .n{font-family:Cascadia Mono,Consolas,monospace;font-size:10px;color:var(--fic-ink3);font-weight:400;}',
+      '.fic-chips{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 2px;scrollbar-width:none;flex:none;}',
+      '.fic-chips::-webkit-scrollbar{display:none;}',
+      '.fic-chip{flex:none;height:26px;padding:0 10px;border-radius:99px;border:1px solid var(--fic-line2);background:var(--fic-surface);',
+      'color:var(--fic-ink2);font-family:inherit;font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}',
+      '.fic-chip[aria-pressed="true"]{background:var(--fic-ink);border-color:var(--fic-ink);color:var(--fic-surface);font-weight:600;}',
+      '.fic-chip .n{font-family:Cascadia Mono,Consolas,monospace;font-size:10px;color:var(--fic-ink3);}',
+      '.fic-chip[aria-pressed="true"] .n{color:var(--fic-surface);opacity:.75;}',
+      '.fic-chip .flag{width:5px;height:5px;border-radius:99px;background:var(--fic-warn);}',
+      '.fic-pill{margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:25px;padding:0 9px;border-radius:99px;',
+      'border:1px solid var(--fic-line2);background:var(--fic-surface);color:var(--fic-ink2);font-family:inherit;font-size:11.5px;cursor:pointer;}',
+      '.fic-pill.count{color:var(--fic-warn);font-weight:600;border-color:color-mix(in srgb,var(--fic-warn) 34%,var(--fic-line2));',
+      'background:color-mix(in srgb,var(--fic-warn) 12%,var(--fic-surface));}',
+      '.fic-sect{margin:14px 0 0;}',
+      '.fic-sect:first-child{margin-top:0;}',
+      '.fic-sect-head{display:flex;align-items:baseline;gap:6px;margin-bottom:7px;}',
+      '.fic-sect-title{font-size:12px;font-weight:600;color:var(--fic-ink2);letter-spacing:.02em;}',
+      '.fic-sect-meta{margin-left:auto;font-family:Cascadia Mono,Consolas,monospace;font-size:10px;color:var(--fic-ink3);}',
+      '.fic-card{background:var(--fic-surface);border:1px solid var(--fic-line);border-radius:12px;padding:11px 12px;}',
+      '.fic-card+.fic-card{margin-top:8px;}',
+      '.fic-card.flat{background:var(--fic-surface2);border-color:transparent;}',
+      '.fic-mission{background:var(--fic-surface);border:1px solid color-mix(in srgb,var(--fic-brand) 30%,var(--fic-line));',
+      'border-radius:12px;overflow:hidden;}',
+      '.fic-mission-head{padding:9px 12px;display:flex;align-items:center;gap:7px;',
+      'background:color-mix(in srgb,var(--fic-brand) 8%,var(--fic-surface));border-bottom:1px solid color-mix(in srgb,var(--fic-brand) 22%,var(--fic-line));}',
+      '.fic-mission-head .t{font-size:12.5px;font-weight:600;color:var(--fic-ink);}',
+      '.fic-mission-body{padding:2px 12px 10px;}',
+      '.fic-field{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--fic-line);}',
+      '.fic-field:last-child{border-bottom:0;}',
+      '.fic-field .k{flex:none;width:54px;font-size:11.5px;color:var(--fic-ink3);padding-top:1px;}',
+      '.fic-field .v{flex:1;font-size:12px;color:var(--fic-ink);line-height:1.65;min-width:0;word-break:break-word;}',
+      '.fic-field .v.muted{color:var(--fic-ink3);}',
+      '.fic-field .add{color:var(--fic-brand);cursor:pointer;border-bottom:1px dashed color-mix(in srgb,var(--fic-brand) 40%,transparent);}',
+      '.fic-beats{margin:0;padding-left:15px;}',
+      '.fic-beats li{font-size:12px;line-height:1.7;}',
+      '.fic-beats li::marker{color:var(--fic-ink3);font-family:Cascadia Mono,Consolas,monospace;font-size:10px;}',
+      '.fic-tag{display:inline-flex;align-items:center;height:17px;padding:0 5px;border-radius:4px;font-size:10px;',
+      'background:var(--fic-surface3);color:var(--fic-ink3);}',
+      '.fic-tag.brand{background:color-mix(in srgb,var(--fic-brand) 14%,var(--fic-surface));color:var(--fic-brand);}',
+      '.fic-tag.warn{background:color-mix(in srgb,var(--fic-warn) 14%,var(--fic-surface));color:var(--fic-warn);}',
+      '.fic-tag.ok{background:color-mix(in srgb,var(--fic-ok) 14%,var(--fic-surface));color:var(--fic-ok);}',
+      '.fic-tag.bad{background:color-mix(in srgb,var(--fic-bad) 14%,var(--fic-surface));color:var(--fic-bad);}',
+      '.fic-quote{border-left:2px solid color-mix(in srgb,var(--fic-brand) 40%,var(--fic-line));padding:2px 0 2px 9px;margin:6px 0 0;',
+      'font-family:var(--dsw-font-family,inherit);font-size:12px;color:var(--fic-ink2);}',
+      '.fic-quote .src{display:block;margin-top:2px;font-family:Cascadia Mono,Consolas,monospace;font-size:10px;color:var(--fic-ink3);}',
+      '.fic-acc{border:1px solid var(--fic-line);border-radius:12px;background:var(--fic-surface);overflow:hidden;}',
+      '.fic-acc+.fic-acc{margin-top:8px;}',
+      '.fic-acc-head{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;}',
+      '.fic-acc-head:hover{background:var(--fic-surface2);}',
+      '.fic-acc-head .t{font-size:12px;font-weight:600;color:var(--fic-ink);}',
+      '.fic-acc-head .n{margin-left:auto;font-family:Cascadia Mono,Consolas,monospace;font-size:10px;color:var(--fic-ink3);}',
+      '.fic-acc-body{padding:0 12px 10px;}',
+      '.fic-acc-line{display:flex;gap:8px;font-size:11.5px;padding:5px 0;border-top:1px dashed var(--fic-line);}',
+      '.fic-acc-line b{flex:none;width:52px;font-weight:600;color:var(--fic-ink3);font-size:11px;}',
+      '.fic-acc-line span{flex:1;color:var(--fic-ink2);line-height:1.65;min-width:0;word-break:break-word;}',
+      '.fic-foot{flex:none;padding:9px 14px 11px;background:var(--fic-surface);border-top:1px solid var(--fic-line);',
+      'display:flex;align-items:center;gap:8px;}',
+      '.fic-foot .hint{margin-left:auto;font-family:Cascadia Mono,Consolas,monospace;font-size:10px;color:var(--fic-ink3);}',
+      '.fic-sheet-mask{position:absolute;inset:0;z-index:40;background:var(--dsw-alias-bg-mask-1,rgba(16,22,32,.34));',
+      'display:flex;flex-direction:column;justify-content:flex-end;}',
+      '.fic-sheet{background:var(--fic-surface);border-radius:16px 16px 0 0;max-height:84%;display:flex;flex-direction:column;overflow:hidden;',
+      'box-shadow:0 -8px 28px -12px rgba(16,22,32,.35);}',
+      '.fic-sheet-body{padding:4px 14px 14px;overflow-y:auto;overscroll-behavior:contain;}',
+      '@media (prefers-reduced-motion:no-preference){.fic-sheet{animation:fic-up .18s ease-out both;}}',
+      '@keyframes fic-up{from{transform:translateY(14px);opacity:.72;}to{transform:none;opacity:1;}}',
+      '.fic-link{border:0;background:transparent;padding:0;cursor:pointer;color:var(--fic-brand);font-family:inherit;font-size:11.5px;}',
+      '.fic-link.muted{color:var(--fic-ink3);}',
+    ].join('');
+
+    function Styles() {
+      return h('style', { 'data-novel-fanfic': '' }, CORE_CSS);
+    }
+
+
     // ── 图标（内联 SVG，颜色跟随 currentColor） ───────────────────────────────
     const ICONS = {
       overview: ['M3 4h7v7H3z', 'M14 4h7v4h-7z', 'M14 11h7v9h-7z', 'M3 14h7v6H3z'],
@@ -369,39 +489,34 @@ window.__ModuleLoader__.load({
       return h(
         'div',
         {
-          style: {
-            position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'flex-end',
-            background: c.mask, padding: 8, boxSizing: 'border-box',
-          },
+          className: 'fic-sheet-mask',
           onClick: props.onClose,
         },
         h(
           'div',
           {
+            className: 'fic-sheet',
+            role: 'dialog',
+            'aria-modal': 'true',
             onClick: function (event) { event.stopPropagation(); },
-            style: {
-              width: '100%', maxHeight: '84%', display: 'flex', flexDirection: 'column',
-              background: c.layer, border: '1px solid ' + c.border2, borderRadius: 14,
-              overflow: 'hidden',
-            },
           },
           h(
             'div',
-            { style: { padding: '9px 12px 7px', borderBottom: '1px solid ' + c.border, display: 'flex', alignItems: 'center', gap: 8 } },
+            { style: { padding: '10px 14px 8px', borderBottom: '1px solid ' + c.border, display: 'flex', alignItems: 'center', gap: 8, flex: 'none' } },
             h('div', { style: { flex: 1, minWidth: 0 } }, props.title),
             props.actions || null,
             h('button', {
               type: 'button', onClick: props.onClose, title: '关闭（Esc）',
               style: {
                 appearance: 'none', border: 'none', background: 'transparent', color: c.faint,
-                width: 26, height: 26, borderRadius: 6, cursor: 'pointer', display: 'flex',
+                width: 28, height: 28, borderRadius: 7, cursor: 'pointer', display: 'flex',
                 alignItems: 'center', justifyContent: 'center', padding: 0,
               },
             }, h(Icon, { name: 'close', size: 15 })),
           ),
           h(
             'div',
-            { style: { padding: '10px 12px 14px', overflow: 'auto', minHeight: 0, flex: 1, fontSize: 12.5, lineHeight: 1.7 } },
+            { className: 'fic-sheet-body', style: { fontSize: 12.5, lineHeight: 1.7, padding: '10px 14px 14px' } },
             props.children,
           ),
         ),
@@ -441,7 +556,7 @@ window.__ModuleLoader__.load({
       const [state, setState] = React.useState({ phase: 'loading', data: null, error: null });
       const [project, setProject] = React.useState('');
       const [projects, setProjects] = React.useState([]);
-      const [tab, setTab] = React.useState('overview');
+      const [tab, setTab] = React.useState('canon');
       const [sub, setSub] = React.useState('characters');
       const [worldSub, setWorldSub] = React.useState('rules');
       const [plotSub, setPlotSub] = React.useState('timeline');
@@ -469,6 +584,8 @@ window.__ModuleLoader__.load({
       const [searchTerm, setSearchTerm] = React.useState('');
       const [searchResult, setSearchResult] = React.useState(null);
       const [writing, setWriting] = React.useState({ chapter: '', phase: 'idle', tags: null, markdown: '', draft: '', checked: null, error: null });
+      // 章节任务卡的编辑草稿（v0.2.0）：{ chapter, goal, arc, beats, openQuestions }
+      const [missionDraft, setMissionDraft] = React.useState(null);
 
       const refresh = React.useCallback(async function () {
         setState(function (prev) { return { phase: prev.data ? 'refreshing' : 'loading', data: prev.data, error: null }; });
@@ -583,12 +700,20 @@ window.__ModuleLoader__.load({
       }, [data, chapters, face.contract]);
 
       const switchWritingChapter = React.useCallback(async function (id) {
-        setWriting(function (prev) { return Object.assign({}, prev, { chapter: id, phase: 'loading', error: null, checked: null }); });
+        // 切章先清掉上一章的契约与检查结果：加载期间不能让人看到「上一章的契约」配这一章的标题。
+        setWriting(function (prev) { return Object.assign({}, prev, { chapter: id, phase: 'loading', tags: null, markdown: '', checked: null, error: null }); });
         try {
           const contract = await face.contract(id, project || undefined);
-          setWriting(function (prev) { return Object.assign({}, prev, { chapter: id, phase: 'ready', tags: contract.tags || null, markdown: contract.markdown || '', error: null }); });
+          setWriting(function (prev) {
+            // 回包可能是慢的那一次：章节已经被切走就丢弃。
+            if (prev.chapter !== id) return prev;
+            return Object.assign({}, prev, { chapter: id, phase: 'ready', tags: contract.tags || null, markdown: contract.markdown || '', error: null });
+          });
         } catch (error) {
-          setWriting(function (prev) { return Object.assign({}, prev, { phase: 'error', error: String((error && error.message) || error) }); });
+          setWriting(function (prev) {
+            if (prev.chapter !== id) return prev;
+            return Object.assign({}, prev, { phase: 'error', error: String((error && error.message) || error) });
+          });
         }
       }, [face.contract]);
 
@@ -653,49 +778,48 @@ window.__ModuleLoader__.load({
 
       const header = h(
         'div',
-        { style: { padding: '11px 13px 8px', borderBottom: '1px solid ' + c.border, display: 'flex', alignItems: 'center', gap: 8 } },
+        { className: 'fic-head' },
         h(
           'div',
-          { style: { minWidth: 0, flex: 1 } },
-          h('div', { style: { display: 'flex', alignItems: 'center', gap: 7 } },
-            h('div', { style: { color: c.text, fontSize: 14.5, fontWeight: 600, letterSpacing: '0.01em' } }, TITLE),
-            reviewCount
-              ? h('button', {
-                  type: 'button', onClick: function () { setSheet({ kind: 'review', tab: 'pending' }); },
-                  style: {
-                    appearance: 'none', border: 'none', padding: '1px 7px', borderRadius: 99,
-                    background: 'color-mix(in srgb, ' + c.warn + ' 18%, transparent)',
-                    color: c.warn, fontSize: 10.5, lineHeight: '17px', cursor: 'pointer', fontFamily: 'inherit',
-                  },
-                }, reviewCount + ' 待审')
-              : null,
-          ),
-          h('div', { style: { color: c.faint, fontSize: 11, marginTop: 2, display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 } },
-            projectSelect(),
-            book && book.stats ? h('span', { style: { color: c.border2 } }, '·') : null,
-            book && book.stats ? h('span', { style: { whiteSpace: 'nowrap' } }, book.stats.chapters + ' 章 · ' + book.stats.chars + ' 字') : null,
-          ),
-        ),
-        h(
-          'div',
-          { style: { display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 } },
+          { className: 'fic-head-row' },
+          h('span', { className: 'fic-mark' }, h(Icon, { name: 'settings', size: 15 })),
+          h('span', { className: 'fic-title' }, TITLE),
+          h('span', { className: 'fic-ver', title: '项目版本：任意一次写操作 +1' }, 'v' + (typeof (data && data.revision) === 'number' ? data.revision : '–')),
+          h('span', { style: { flex: 1 } }),
           reviewCount
-            ? iconButton({ icon: 'bell', title: '审阅队列：待确认 ' + pending.length + '，矛盾 ' + contradictions.length, badge: reviewCount, onClick: function () { setSheet({ kind: 'review', tab: pending.length ? 'pending' : 'contradictions' }); } })
-            : iconButton({ icon: 'bell', title: '审阅队列（空）', onClick: function () { setSheet({ kind: 'review', tab: 'pending' }); } }),
+            ? h('button', {
+              type: 'button',
+              className: 'fic-pill count',
+              title: '待确认 ' + pending.length + ' · 设定矛盾 ' + contradictions.length,
+              onClick: function () { setSheet({ kind: 'review', tab: pending.length ? 'pending' : 'contradictions' }); },
+            }, '● 待办 ' + reviewCount)
+            : h('button', {
+              type: 'button',
+              className: 'fic-pill',
+              title: '审阅队列（空）',
+              onClick: function () { setSheet({ kind: 'review', tab: 'pending' }); },
+            }, '待办 0'),
           iconButton({ icon: 'refresh', title: state.phase === 'refreshing' ? '刷新中…' : '刷新', onClick: refresh, disabled: state.phase === 'loading' || state.phase === 'refreshing' }),
+        ),
+        h('div', { style: { color: c.faint, fontSize: 11, marginTop: 3, display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 } },
+          projectSelect(),
+          book && book.stats ? h('span', { style: { color: c.border2 } }, '·') : null,
+          book && book.stats ? h('span', { style: { whiteSpace: 'nowrap' } }, book.stats.chapters + ' 章 · ' + book.stats.chars + ' 字') : null,
+          writing.chapter ? h('span', { style: { color: c.border2 } }, '·') : null,
+          writing.chapter ? h('span', { style: { whiteSpace: 'nowrap' } }, '当前 ' + writing.chapter) : null,
         ),
       );
 
-      // ── 一级 tab ────────────────────────────────────────────────────────────
+      // ── 一级 tab（v0.2.0：总览不再是入口，改成常驻「下一步」条）───────────────
       const TAB_ITEMS = [
-        { key: 'overview', label: '总览', icon: 'overview' },
-        { key: 'settings', label: '设定', icon: 'settings' },
-        { key: 'plot', label: '剧情', icon: 'plot' },
-        { key: 'source', label: '原文', icon: 'source' },
+        { key: 'canon', label: '原著', count: book ? book.characters.length : 0 },
+        { key: 'delta', label: '本作', count: deltaData.items.length },
+        { key: 'plot', label: '剧情', count: book ? book.timeline.length : 0 },
+        { key: 'write', label: '写作', count: null },
       ];
       const tabBar = h(
         'div',
-        { style: { display: 'flex', gap: 2, padding: '5px 10px 0', borderBottom: '1px solid ' + c.border } },
+        { className: 'fic-tabs', role: 'tablist' },
         TAB_ITEMS.map(function (item) {
           const active = tab === item.key;
           return h(
@@ -703,60 +827,278 @@ window.__ModuleLoader__.load({
             {
               key: item.key,
               type: 'button',
+              role: 'tab',
+              'aria-selected': active ? 'true' : 'false',
+              className: 'fic-tab',
               onClick: function () { setTab(item.key); },
-              style: {
-                appearance: 'none', border: 'none', background: 'transparent', fontFamily: 'inherit',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                padding: '7px 9px 8px', cursor: 'pointer', flex: 1, minWidth: 0,
-                fontSize: 12.5, color: active ? c.brand : c.sub, fontWeight: active ? 600 : 400,
-                boxShadow: active ? 'inset 0 -2px 0 0 ' + c.brand : 'none',
-              },
             },
-            h(Icon, { name: item.icon, size: 15 }),
             item.label,
+            h('span', { className: 'n' }, item.key === 'write' ? (writing.chapter || 'ch—') : String(item.count || 0)),
           );
         }),
       );
 
-      // ── 设定左侧子区 ────────────────────────────────────────────────────────
+      // ── 原著内的分段（横向 chips，替代原来的左侧竖排六项）────────────────────
       const SETTING_ITEMS = [
-        { key: 'characters', label: '人物', icon: 'user' },
-        { key: 'factions', label: '势力', icon: 'faction' },
-        { key: 'relations', label: '关系', icon: 'link' },
-        { key: 'world', label: '世界', icon: 'world' },
-        { key: 'conflicts', label: '冲突', icon: 'conflict' },
-        { key: 'deltas', label: '本作', icon: 'pen' },
+        { key: 'characters', label: '人物', count: book ? book.characters.length : 0 },
+        { key: 'factions', label: '势力', count: book ? book.factions.length : 0 },
+        { key: 'relations', label: '关系', count: book ? book.matrix.people.length : 0 },
+        { key: 'world', label: '世界', count: book ? book.world.rules.length : 0 },
+        { key: 'conflicts', label: '冲突', count: book ? book.conflicts.length : 0 },
+        { key: 'source', label: '原文', count: chapters.length },
       ];
 
-      function rail() {
+      function chips() {
+        const pendingByBucket = {};
+        pending.forEach(function (row) { pendingByBucket[row.bucket] = (pendingByBucket[row.bucket] || 0) + 1; });
+        const flag = function (key) {
+          if (key === 'characters') return (pendingByBucket.characters || 0) > 0;
+          if (key === 'world') return (pendingByBucket.worldRules || 0) > 0;
+          return false;
+        };
         return h(
           'div',
-          { style: { width: 70, flexShrink: 0, borderRight: '1px solid ' + c.border, padding: '8px 6px', display: 'flex', flexDirection: 'column', gap: 2 } },
+          { className: 'fic-chips', role: 'toolbar' },
           SETTING_ITEMS.map(function (item) {
             const active = sub === item.key;
-            const count = item.key === 'characters' ? (book ? book.characters.length : 0)
-              : item.key === 'factions' ? (book ? book.factions.length : 0)
-                : item.key === 'conflicts' ? (book ? book.conflicts.length : 0)
-                  : item.key === 'deltas' ? deltaData.items.length : 0;
             return h(
               'button',
               {
                 key: item.key,
                 type: 'button',
+                className: 'fic-chip',
+                'aria-pressed': active ? 'true' : 'false',
                 onClick: function () { setSub(item.key); },
-                style: {
-                  appearance: 'none', border: 'none', textAlign: 'left', fontFamily: 'inherit',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  padding: '8px 2px', borderRadius: 9, cursor: 'pointer',
-                  background: active ? c.layer2 : 'transparent',
-                  color: active ? c.brand : c.sub,
-                },
               },
-              h(Icon, { name: item.icon, size: 17 }),
-              h('span', { style: { fontSize: 11, fontWeight: active ? 600 : 400 } }, item.label),
-              count ? h('span', { style: { fontSize: 9.5, color: c.faint } }, String(count)) : null,
+              item.label,
+              h('span', { className: 'n' }, String(item.count || 0)),
+              flag(item.key) ? h('span', { className: 'flag', title: '有未确认条目' }) : null,
             );
           }),
+        );
+      }
+
+      // ── 下一步：面板任何时刻只说一条「现在该做什么」──────────────────────────
+      function nextStrip() {
+        if (!book) {
+          return h('div', { className: 'fic-next' },
+            h('span', { className: 'fic-next-kicker' }, 'next'),
+            h('div', { className: 'fic-next-body' },
+              h('div', { className: 'fic-next-title' }, h('b', null, '先导入原著')),
+              h('span', { className: 'fic-next-why' }, 'txt / md；导入后自动分章、建索引，再逐条确认 canon。'),
+            ),
+            h('button', { type: 'button', className: 'fic-btn primary', onClick: function () { setImportOpen(true); } }, '导入原著'),
+          );
+        }
+        const missions = (data && data.missions) || {};
+        const chapterId = writing.chapter || (chapters[0] && chapters[0].id) || '';
+        const mission = chapterId ? missions[chapterId] : null;
+        const hasContract = Boolean(writing.tags || writing.markdown);
+        let title = '';
+        let why = '';
+        let label = '';
+        let action = null;
+        if (contradictions.length) {
+          title = contradictions.length + ' 条设定矛盾挡着契约';
+          why = '裁决前不会写进契约；先定下来写哪一版。';
+          label = '去裁决';
+          action = function () { setSheet({ kind: 'review', tab: 'contradictions' }); };
+        } else if (pending.length) {
+          title = pending.length + ' 条待确认，还没进契约';
+          why = '确认后才会写进这一章的契约。';
+          label = '去确认';
+          action = function () { setSheet({ kind: 'review', tab: 'pending' }); };
+        } else if (!mission) {
+          title = (chapterId || '这一章') + ' 还没想好要写什么';
+          why = '写之前 5 分钟：一句话目标 + 3 个节拍就够。';
+          label = '写任务卡';
+          action = function () { setTab('write'); setMissionDraft({ chapter: chapterId, open: true, goal: '', arc: '', beats: '', openQuestions: '' }); };
+        } else if (!hasContract) {
+          title = chapterId + ' 的任务卡有了，契约还没生成';
+          why = '契约是这一章必须遵守的硬约束（' + ((mission.beats || []).length) + ' 个节拍、' + ((mission.openQuestions || []).length) + ' 项开放）。';
+          label = '生成契约';
+          action = function () { setTab('write'); openWriting(chapterId); };
+        } else {
+          title = chapterId + ' 可以开写：契约已生成';
+          why = (mission.beats || []).length
+            ? '任务卡有 ' + mission.beats.length + ' 个节拍，写之前把起稿指令发给模型。'
+            : '写之前把起稿指令发给模型；写回来再贴进「检查」。';
+          label = '写作准备';
+          action = function () { setTab('write'); openWriting(chapterId); };
+        }
+        return h('div', { className: 'fic-next' },
+          h('span', { className: 'fic-next-kicker' }, 'next'),
+          h('div', { className: 'fic-next-body' },
+            h('div', { className: 'fic-next-title' }, h('b', null, title)),
+            why ? h('span', { className: 'fic-next-why' }, why) : null,
+          ),
+          action ? h('button', { type: 'button', className: 'fic-btn primary', onClick: action }, label) : null,
+        );
+      }
+
+      // ── 写作：章选择 + 章节任务卡 + 契约 + 上一次检查 ──────────────────────────
+      function writeView() {
+        const missions = (data && data.missions) || {};
+        const defaultChapter = (data && data.currentChapter)
+          || (chapters.filter(function (ch) { return Number(ch.ordinal) > 0; })[0] || chapters[0] || {}).id
+          || '';
+        const chapterId = writing.chapter || defaultChapter;
+        const mission = chapterId ? missions[chapterId] : null;
+        const draft = missionDraft && missionDraft.chapter === chapterId ? missionDraft : null;
+        const checked = writing.checked;
+        const summary = (checked && checked.summary) || null;
+
+        const saveMissionDraft = async function () {
+          const value = missionDraft || {};
+          await run('保存任务卡', async function () {
+            const payload = {
+              goal: value.goal || undefined,
+              arc: value.arc || undefined,
+              beats: value.beats ? String(value.beats).split(/[|\n]/).map(function (s) { return s.trim(); }).filter(Boolean) : undefined,
+              openQuestions: value.openQuestions ? String(value.openQuestions).split(/[|\n]/).map(function (s) { return s.trim(); }).filter(Boolean) : undefined,
+            };
+            await face.planSet(chapterId, payload, project || undefined);
+            setMissionDraft(null);
+            await refresh();
+          });
+        };
+
+        const chapterRow = h('div', { className: 'fic-card flat', style: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px' } },
+          h('span', { style: { fontSize: 11.5, color: c.faint } }, '章节'),
+          h('select', {
+            value: chapterId,
+            onChange: function (event) { switchWritingChapter(event.target.value); },
+            style: { appearance: 'none', border: '1px solid ' + c.border2, borderRadius: 8, background: c.layer, color: c.text, fontSize: 11.5, fontFamily: 'inherit', padding: '4px 6px', maxWidth: 210, cursor: 'pointer' },
+          }, chapters.map(function (ch) { return h('option', { key: ch.id, value: ch.id, selected: ch.id === chapterId }, ch.id + (ch.title ? ' · ' + ch.title : '')); })),
+          h('span', { style: { marginLeft: 'auto', fontFamily: 'Cascadia Mono,Consolas,monospace', fontSize: 10, color: c.faint } },
+            (chapters.filter(function (ch) { return ch.id === chapterId; })[0] || {}).chars ? ((chapters.filter(function (ch) { return ch.id === chapterId; })[0].chars) + ' 字原著') : ''),
+        );
+
+        const missionCard = draft
+          ? h('div', { className: 'fic-mission' },
+            h('div', { className: 'fic-mission-head' },
+              h('span', { className: 't' }, '章节任务卡'),
+              h('span', { className: 'fic-tag brand' }, chapterId),
+              h('span', { style: { flex: 1 } }),
+              h('button', { type: 'button', className: 'fic-link', onClick: saveMissionDraft, disabled: !!busy }, '保存'),
+              h('button', { type: 'button', className: 'fic-link muted', onClick: function () { setMissionDraft(null); } }, '取消'),
+            ),
+            h('div', { className: 'fic-mission-body' },
+              h('div', { className: 'fic-field' },
+                h('span', { className: 'k' }, '本章要干'),
+                h('div', { style: { flex: 1 } },
+                  h('textarea', {
+                    value: draft.goal || '', rows: 2, placeholder: '一句话：这一章要让什么发生？',
+                    onChange: function (event) { setMissionDraft(Object.assign({}, draft, { goal: event.target.value })); },
+                    style: { width: '100%', resize: 'vertical', fontSize: 12, fontFamily: 'inherit', lineHeight: 1.6, padding: 6, borderRadius: 7, border: '1px solid ' + c.border2, background: c.layer, color: c.text, boxSizing: 'border-box' },
+                  })),
+              ),
+              h('div', { className: 'fic-field' },
+                h('span', { className: 'k' }, '情绪曲线'),
+                h('div', { style: { flex: 1 } },
+                  h('input', {
+                    value: draft.arc || '', placeholder: '提防 → 松动 → 又一记冷下去',
+                    onChange: function (event) { setMissionDraft(Object.assign({}, draft, { arc: event.target.value })); },
+                    style: { width: '100%', fontSize: 12, fontFamily: 'inherit', padding: '5px 6px', borderRadius: 7, border: '1px solid ' + c.border2, background: c.layer, color: c.text, boxSizing: 'border-box' },
+                  })),
+              ),
+              h('div', { className: 'fic-field' },
+                h('span', { className: 'k' }, '节拍'),
+                h('div', { style: { flex: 1 } },
+                  h('textarea', {
+                    value: draft.beats || '', rows: 4, placeholder: '一行一个节拍（最多 7 条）',
+                    onChange: function (event) { setMissionDraft(Object.assign({}, draft, { beats: event.target.value })); },
+                    style: { width: '100%', resize: 'vertical', fontSize: 12, fontFamily: 'inherit', lineHeight: 1.6, padding: 6, borderRadius: 7, border: '1px solid ' + c.border2, background: c.layer, color: c.text, boxSizing: 'border-box' },
+                  })),
+              ),
+              h('div', { className: 'fic-field' },
+                h('span', { className: 'k' }, '开放问题'),
+                h('div', { style: { flex: 1 } },
+                  h('textarea', {
+                    value: draft.openQuestions || '', rows: 2, placeholder: '写之前要拍板的事；会进契约的「不确定」段',
+                    onChange: function (event) { setMissionDraft(Object.assign({}, draft, { openQuestions: event.target.value })); },
+                    style: { width: '100%', resize: 'vertical', fontSize: 12, fontFamily: 'inherit', lineHeight: 1.6, padding: 6, borderRadius: 7, border: '1px solid ' + c.border2, background: c.layer, color: c.text, boxSizing: 'border-box' },
+                  })),
+              ),
+            ),
+          )
+          : mission
+            ? h('div', { className: 'fic-mission' },
+              h('div', { className: 'fic-mission-head' },
+                h('span', { className: 't' }, mission.title || '这一章的任务卡'),
+                h('span', { className: 'fic-tag brand' }, chapterId),
+                h('span', { style: { flex: 1 } }),
+                (mission.beats || []).length ? h('span', { className: 'n', style: { fontFamily: 'Cascadia Mono,Consolas,monospace', fontSize: 10, color: c.faint } }, mission.beats.length + ' beats') : null,
+                h('button', {
+                  type: 'button', className: 'fic-link',
+                  onClick: function () {
+                    setMissionDraft({
+                      chapter: chapterId, open: true,
+                      goal: mission.goal || '', arc: mission.arc || '',
+                      beats: (mission.beats || []).join('\n'),
+                      openQuestions: (mission.openQuestions || []).join('\n'),
+                    });
+                  },
+                }, '编辑'),
+              ),
+              h('div', { className: 'fic-mission-body' },
+                mission.goal ? h('div', { className: 'fic-field' }, h('span', { className: 'k' }, '本章要干'), h('span', { className: 'v' }, mission.goal)) : null,
+                mission.arc ? h('div', { className: 'fic-field' }, h('span', { className: 'k' }, '情绪曲线'), h('span', { className: 'v' }, mission.arc)) : null,
+                (mission.anchors || []).length ? h('div', { className: 'fic-field' }, h('span', { className: 'k' }, '原著锚点'), h('span', { className: 'v' }, mission.anchors.join('；'))) : null,
+                mission.readerExpectation ? h('div', { className: 'fic-field' }, h('span', { className: 'k' }, '读者期待'), h('span', { className: 'v' }, mission.readerExpectation)) : null,
+                (mission.beats || []).length
+                  ? h('div', { className: 'fic-field' },
+                    h('span', { className: 'k' }, 'beats'),
+                    h('span', { className: 'v', style: { paddingLeft: 0 } },
+                      h('ol', { className: 'fic-beats' }, mission.beats.map(function (beat, i) { return h('li', { key: 'b' + i }, beat); }))))
+                  : null,
+                (mission.avoid || []).length ? h('div', { className: 'fic-field' }, h('span', { className: 'k' }, '避开'), h('span', { className: 'v muted' }, mission.avoid.join('；'))) : null,
+                (mission.openQuestions || []).length
+                  ? h('div', { className: 'fic-field', style: { background: 'color-mix(in srgb, ' + c.warn + ' 10%, transparent)', margin: '0 -12px', padding: '6px 12px' } },
+                    h('span', { className: 'k', style: { color: c.warn } }, '开放问题'),
+                    h('span', { className: 'v' }, mission.openQuestions.join('；') + '（会进契约的「不确定」段）'))
+                  : null,
+              ),
+            )
+            : h('div', { className: 'fic-card' },
+              emptyState('这一章还没有任务卡', '三行也算一张：一句话目标 + 情绪曲线 + 3 个节拍。它不是契约，删了也不影响编译。',
+                button({ small: true, variant: 'primary', icon: 'pen', onClick: function () { setMissionDraft({ chapter: chapterId, open: true, goal: '', arc: '', beats: '', openQuestions: '' }); }, children: '写任务卡' })));
+
+        const contractCard = (writing.tags || writing.markdown)
+          ? h('div', { className: 'fic-acc' },
+            h('div', { className: 'fic-acc-head', onClick: function () { openWriting(chapterId); } },
+              h('span', { className: 't' }, '这一章的契约'),
+              writing.tags && writing.tags['本作'] ? h('span', { className: 'fic-tag brand' }, '优先于原著') : null,
+              h('span', { className: 'n' }, ((writing.markdown || '').length || (writing.tags ? Object.keys(writing.tags).length + ' 段' : '')) + ''),
+              h('span', { style: { color: c.faint, fontSize: 11 } }, '打开 ›')),
+          )
+          : h('div', { className: 'fic-card' },
+            emptyState('还没生成这一章的契约', '契约 = 视角 / 在场 / 称呼 / 知情 / 世界规则 / 时间线 / 禁忌 / 不确定 / 锚点。',
+              button({ small: true, variant: 'primary', icon: 'settings', onClick: function () { openWriting(chapterId); }, children: '生成契约' })));
+
+        const checkSummary = summary
+          ? h('div', { className: 'fic-card' },
+            h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' } },
+              h('span', { className: 'fic-tag ' + (summary.blockers ? 'bad' : summary.warnings ? 'warn' : 'ok') }, summary.blockers ? 'blocker ' + summary.blockers : summary.warnings ? 'warning ' + summary.warnings : '通过'),
+              h('span', { style: { fontSize: 11, color: c.faint } }, 'blocker ' + summary.blockers + ' · warning ' + summary.warnings + ' · info ' + summary.infos + (summary.waived ? ' · 放过 ' + summary.waived : '')),
+              h('button', { type: 'button', className: 'fic-link', style: { marginLeft: 'auto' }, onClick: function () { openWriting(chapterId); } }, '看详情 ›'),
+            ))
+          : h('div', { className: 'fic-card' },
+            emptyState('还没检查这一章的草稿', '贴一段正文进来，只报「在哪、凭什么、跟哪条设定冲突」；不评分、不改稿。',
+              button({ small: true, icon: 'check', onClick: function () { openWriting(chapterId); }, children: '检查这一章' })));
+
+        return h('div', { style: { padding: '10px 14px 14px', overflowY: 'auto', flex: 1, minHeight: 0 } },
+          chapterRow,
+          h('div', { className: 'fic-sect' }, missionCard),
+          h('div', { className: 'fic-sect' }, contractCard),
+          checkSummary ? h('div', { className: 'fic-sect' }, h('div', { className: 'fic-sect-head' }, h('span', { className: 'fic-sect-title' }, '写完之后')), checkSummary) : null,
+          (data && data.beat && data.beat.available)
+            ? h('div', { className: 'fic-sect' },
+              h('div', { className: 'fic-sect-head' }, h('span', { className: 'fic-sect-title' }, 'beat 账本'), h('span', { className: 'fic-sect-meta' }, '只读')),
+              h('div', { className: 'fic-card flat' },
+                h('div', { style: { fontSize: 11.5, color: c.sub, lineHeight: 1.7 } },
+                  '《' + data.beat.book + '》：已拍板 ' + data.beat.decided + ' 条，待拍板 ' + data.beat.open + ' 条。这一章要写的事如果已经拍过板，不要再在这里重复登记。')))
+            : null,
         );
       }
 
@@ -1088,9 +1430,18 @@ window.__ModuleLoader__.load({
             ),
           ),
           list.length
-            ? h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(128px, 1fr))', gap: 7, marginTop: 8 } },
+            ? h('div', { className: 'fic-people', style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginTop: 8 } },
                 list.map(function (ch) { return characterCard(ch); }))
             : emptyState('没有匹配的角色', '换个关键词，或把筛选切回全部。'),
+          list.length
+            ? h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '8px 2px', borderTop: '1px dashed ' + c.border } },
+              h('span', { style: { fontSize: 11, color: c.faint } },
+                '共 ' + list.length + ' 人' + (roleFilter && roleFilter !== 'all' ? '（已按「' + roleFilter + '」筛选）' : '')),
+              h('button', {
+                type: 'button', className: 'fic-link', style: { marginLeft: 'auto' },
+                onClick: function () { setSub('source'); },
+              }, '按章节看全部出场 ›'))
+            : null,
         );
       }
 
@@ -1101,9 +1452,11 @@ window.__ModuleLoader__.load({
             key: ch.id,
             onClick: function () { setSheet({ kind: 'character', id: ch.id }); },
             padding: '11px 10px 9px',
-            style: Object.assign({ position: 'relative', overflow: 'hidden' }, artWash(ch.name)),
+            // v0.2.0：去掉每张卡一套彩色渐变顶边（不承载信息，只是噪音）。
+            // 人物的色相只在头像上出现一次。
+            style: { position: 'relative', overflow: 'hidden' },
           },
-          h('div', { style: { position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundImage: artGradient(ch.name) } }),
+          ch.status !== 'confirmed' ? h('span', { className: 'fic-tag warn', style: { position: 'absolute', top: 8, right: 8 } }, '待确认') : null,
           h('div', { style: { display: 'flex', gap: 8, alignItems: 'center' } },
             avatar(ch.name, 36, ch.role),
             h('div', { style: { minWidth: 0, flex: 1 } },
@@ -2232,22 +2585,63 @@ window.__ModuleLoader__.load({
         if (!data) {
           return h('div', { style: { padding: 14, color: c.faint, fontSize: 12 } }, '正在读取项目状态…');
         }
-        if (tab === 'overview') return overview();
-        if (tab === 'settings') {
-          if (!book) return emptyState('还没有设定数据', '先在总览里导入原著；分析结果确认后，人物/势力/关系/世界/冲突会出现在这里。');
+        if (!book && !importOpen) return overview();
+        if (tab === 'canon') {
+          if (!book) return emptyState('还没有设定数据', '先在「下一步」里导入原著；分析结果确认后，人物/势力/关系/世界/冲突会出现在这里。');
           const inner = sub === 'characters' ? characterGrid()
             : sub === 'factions' ? factionGrid()
               : sub === 'relations' ? relationView()
                 : sub === 'world' ? worldView()
-                  : sub === 'deltas' ? deltaView()
+                  : sub === 'source' ? sourceView()
                     : conflictView();
-          return h('div', { style: { display: 'flex', flex: 1, minHeight: 0 } },
-            rail(),
-            h('div', { style: { flex: 1, minWidth: 0, overflow: 'auto' } }, inner),
+          return h('div', { className: 'fic-canon' },
+            chips(),
+            h('div', { style: { flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' } }, inner),
           );
         }
-        if (tab === 'plot') return book ? plotView() : emptyState('还没有剧情数据', '导入原著并确认 canon 后，时间线与伏笔会出现在这里。');
-        return sourceView();
+        if (tab === 'delta') {
+          return h('div', { style: { flex: 1, minHeight: 0, overflowY: 'auto' } }, deltaView(), waiversSection(), declarationsEntry());
+        }
+        if (tab === 'plot') {
+          return book ? plotView() : emptyState('还没有剧情数据', '导入原著并确认 canon 后，时间线与伏笔会出现在这里。');
+        }
+        return writeView();
+      }
+
+      // 本作区尾部：被放过的检查（可撤销）+ 作者私设入口
+      function waiversSection() {
+        const list = (data && data.waivers) || [];
+        if (!list.length) return null;
+        return h('div', { className: 'fic-sect', style: { padding: '0 14px 12px' } },
+          h('div', { className: 'fic-sect-head' },
+            h('span', { className: 'fic-sect-title' }, '被放过的检查'),
+            h('span', { className: 'fic-sect-meta' }, list.length + ' 条 · 可撤销')),
+          h('div', { className: 'fic-card' },
+            list.slice(0, 20).map(function (w, i) {
+              return h('div', { key: 'w' + i, style: { padding: '6px 0', borderBottom: i === Math.min(list.length, 20) - 1 ? 'none' : '1px dashed ' + c.border } },
+                h('div', { style: { display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' } },
+                  h('span', { className: 'fic-tag warn' }, w.chapter),
+                  h('span', { style: { fontFamily: 'Cascadia Mono,Consolas,monospace', fontSize: 10, color: c.faint } }, w.detector + '/' + w.code),
+                  h('button', {
+                    type: 'button', className: 'fic-link muted', style: { marginLeft: 'auto' },
+                    onClick: function () { return run('撤销放过', function () { return face.unwaive(w.id, project || undefined); }); },
+                  }, '撤销'),
+                ),
+                h('div', { className: 'fic-quote' }, w.quote || '（没有引文）', h('span', { className: 'src' }, '理由：' + (w.reason || '（未写）'))),
+              );
+            })));
+      }
+
+      function declarationsEntry() {
+        return h('div', { className: 'fic-sect', style: { padding: '0 14px 14px' } },
+          h('div', { className: 'fic-sect-head' },
+            h('span', { className: 'fic-sect-title' }, '作者私设'),
+            h('span', { className: 'fic-sect-meta' }, '检查器要抓的签名')),
+          h('div', { className: 'fic-acc' },
+            h('div', { className: 'fic-acc-head', onClick: function () { setSheet({ kind: 'declare' }); } },
+              h('span', { className: 't' }, 'AU 规则 / 私设句 / 错名'),
+              h('span', { className: 'n' }, '不进 canon'),
+              h('span', { style: { color: c.faint, fontSize: 11 } }, '打开 ›'))));
       }
 
       // ── 抽屉路由 ────────────────────────────────────────────────────────────
@@ -2274,33 +2668,24 @@ window.__ModuleLoader__.load({
       return h(
         'div',
         {
+          className: 'fic-panel',
           style: {
             position: 'relative', height: '100%', display: 'flex', flexDirection: 'column',
             background: c.base, color: c.text, fontFamily: 'inherit', fontSize: 12.5,
             overflow: 'hidden', boxSizing: 'border-box',
           },
         },
+        h(Styles, null),
         header,
+        nextStrip(),
         tabBar,
-        h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: tab === 'settings' ? 'hidden' : 'auto' } }, content()),
-        book
-          ? h('button', {
-              type: 'button',
-              onClick: function () { openWriting(); },
-              title: '写作准备：这一章的契约、场景承诺与检查；正文去工作区写',
-              style: {
-                position: 'absolute', right: 12, bottom: 12, zIndex: 20,
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '8px 13px', borderRadius: 999, border: 'none',
-                background: c.brand, color: c.onBrand, fontSize: 12.5, fontWeight: 600,
-                fontFamily: 'inherit', cursor: 'pointer',
-                boxShadow: '0 6px 16px -6px color-mix(in srgb, ' + c.brand + ' 55%, transparent)',
-              },
-            },
-            h(Icon, { name: 'pen', size: 14 }),
-            '写作准备',
-          )
-          : null,
+        h('div', {
+          style: {
+            flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column',
+            // 原著区靠 chips + 内层滚动；其它区整块滚
+            overflow: tab === 'canon' ? 'hidden' : tab === 'write' ? 'hidden' : 'auto',
+          },
+        }, content()),
         sheetNode,
         notice
           ? h('div', {
@@ -2403,6 +2788,38 @@ window.__ModuleLoader__.load({
                       },
                       contract: function (id, project) {
                         return runJson('/fic contract ' + id + ' --json' + withProject(project));
+                      },
+                      // 章节任务卡（v0.2.0）：面板读/写都走 /fic plan。
+                      plan: function (id, project) {
+                        return runJson('/fic plan get ' + id + ' --json' + withProject(project));
+                      },
+                      planSet: function (id, patch, project) {
+                        const p = patch || {};
+                        // 数组字段用 U+001F（单元分隔符）拼接：作者在节拍里写「|」也不会被拆开。
+                        const SEP = '\u001f';
+                        let line = '/fic plan set ' + id;
+                        const add = function (flag, value) {
+                          if (value === undefined || value === null || value === '') return;
+                          const text = Array.isArray(value) ? value.join(SEP) : String(value);
+                          line += ' ' + flag + ' ' + encodeURIComponent(text);
+                        };
+                        add('--title', p.title);
+                        add('--goal', p.goal);
+                        add('--arc', p.arc);
+                        add('--pov', p.pov);
+                        add('--place-time', p.placeTime);
+                        add('--reader', p.readerExpectation);
+                        add('--anchors', p.anchors);
+                        add('--beats', p.beats);
+                        add('--avoid', p.avoid);
+                        add('--open', p.openQuestions);
+                        add('--target-chars', p.targetChars);
+                        add('--status', p.status);
+                        add('--source-chapter', p.sourceChapter);
+                        return runJson(line + ' --json' + withProject(project));
+                      },
+                      planClear: function (id, project) {
+                        return runJson('/fic plan clear ' + id + ' --json' + withProject(project));
                       },
                       search: function (term, project) {
                         return runJson('/fic search ' + term + ' --json --limit 20' + withProject(project));

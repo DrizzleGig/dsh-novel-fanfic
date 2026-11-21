@@ -43,13 +43,14 @@ function harness(overrides = {}) {
 
 const byName = (tools) => Object.fromEntries(tools.map(({ definition }) => [definition.name, definition]));
 
-test('插件导出 name / inject，注册 5 个 fic 工具和 /fic 命令', () => {
+test('插件导出 name / inject，注册 6 个 fic 工具和 /fic 命令', () => {
   assert.equal(name, 'novel-fanfic');
   assert.deepEqual(inject, ['tools', 'commands']);
   const { tools, commands } = harness();
   assert.deepEqual(
     tools.map(({ definition }) => definition.name).sort(),
-    ['fic_check', 'fic_contract', 'fic_lookup', 'fic_source', 'fic_state'],
+    // v0.2.0 起多了 fic_plan（章节任务卡）
+    ['fic_check', 'fic_contract', 'fic_lookup', 'fic_plan', 'fic_source', 'fic_state'],
   );
   assert.equal(commands.length, 1);
   assert.equal(commands[0].name, 'fic');

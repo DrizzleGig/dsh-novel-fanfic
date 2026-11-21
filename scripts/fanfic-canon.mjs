@@ -20,7 +20,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 import {
-  loadProject, saveCanon, audit, paths, writeJsonAtomic,
+  loadProject, saveCanon, audit, paths, writeJsonAtomic, commitProject,
 } from '../lib/canon-store.mjs';
 import { verifyCanon } from '../lib/canon-verify.mjs';
 import { ingestFile } from '../lib/ingest.mjs';
@@ -193,6 +193,7 @@ async function cmdPropose() {
   const report = applyProposals(ctx.canon, list, texts);
   if (!values.dry) {
     await saveCanon(root, project, ctx.canon);
+    await commitProject(root, project, {});
     for (const a of report.applied) {
       await audit(root, project, { action: 'proposal.apply', kind: a.proposal.kind, entityId: a.entity?.id, chapter: a.proposal.chapter });
     }
@@ -266,6 +267,7 @@ async function cmdConfirm() {
   const ctx = await loadCtx();
   const done = confirmEntries(ctx.canon, ids);
   await saveCanon(root, project, ctx.canon);
+  await commitProject(root, project, {});
   for (const id of done) await audit(root, project, { action: 'entity.confirm', entityId: id });
   log(`已确认 ${done.length} 条：${done.join(', ') || '（没有匹配的 id）'}`);
 }
@@ -276,6 +278,7 @@ async function cmdReject() {
   const ctx = await loadCtx();
   const done = rejectEntries(ctx.canon, ids);
   await saveCanon(root, project, ctx.canon);
+  await commitProject(root, project, {});
   for (const id of done) await audit(root, project, { action: 'entity.reject', entityId: id });
   log(`已拒绝 ${done.length} 条：${done.join(', ') || '（没有匹配的 id）'}`);
 }
@@ -285,6 +288,7 @@ async function cmdResolve() {
   const ctx = await loadCtx();
   const fc = resolveContradiction(ctx.canon, values.id, values.choice);
   await saveCanon(root, project, ctx.canon);
+  await commitProject(root, project, {});
   await audit(root, project, { action: 'contradiction.resolve', id: fc.id, choice: values.choice });
   log(`已裁决 ${fc.id} → ${values.choice}（两条事实都保留，被覆盖的标 rejected）`);
 }

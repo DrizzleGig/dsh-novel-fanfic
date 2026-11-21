@@ -56,6 +56,11 @@ test('panel --json：总览 + 章节 + 待审 + 未裁决矛盾一次取齐', as
   const run = harness();
   const data = JSON.parse((await run('panel --json')).text);
   assert.equal(data.ok, true);
+  // v0.2.0：面板要带整数 revision 与任务卡表（v0.1 里这两个字段不存在）
+  assert.ok(Number.isInteger(data.revision), `panel.revision 应是整数，实际 ${JSON.stringify(data.revision)}`);
+  assert.ok(data.revision >= 1);
+  assert.equal(typeof data.missions, 'object');
+  assert.equal(data.revisionDrift, false);
   assert.equal(data.project, project);
   assert.equal(data.chapters.length, 7, '6 正文 + ch000 序');
   assert.equal(data.chapters[0].id, 'ch000');
