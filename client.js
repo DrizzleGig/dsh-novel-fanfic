@@ -416,9 +416,59 @@ window.__ModuleLoader__.load({
       return 'linear-gradient(90deg, hsl(' + hue + ' 62% 56%), hsl(' + hue2 + ' 62% 44%))';
     }
 
+    /**
+     * 默认人物形象：本地内联 SVG 动漫头像，不联网、不落盘、不冒充官方图。
+     * 同一个名字稳定得到同一张脸；用户换形象后由 confirmed 图覆盖。
+     */
+    function AnimeFace(props) {
+      const { hue, hue2, pattern } = artOf(props.name);
+      const skin = ['#f6d7c2', '#efc3a5', '#d9a27f'][pattern % 3];
+      const hair = 'hsl(' + hue + ' 38% ' + (pattern % 2 ? 22 : 30) + '%)';
+      const eye = 'hsl(' + hue2 + ' 68% 42%)';
+      const style = pattern % 3;
+      const back = style === 0
+        ? 'M24 51 Q20 19 50 15 Q80 19 76 51 L72 40 Q66 27 50 27 Q34 27 28 40 Z'
+        : style === 1
+          ? 'M22 55 Q18 16 50 13 Q82 16 78 55 L78 80 Q71 72 69 47 Q64 27 50 27 Q36 27 31 47 Q29 72 22 80 Z'
+          : 'M24 52 Q20 18 50 15 Q80 18 76 52 L74 65 Q68 43 63 35 Q57 29 50 29 Q43 29 37 35 Q32 43 26 65 Z';
+      const fringe = style === 0
+        ? 'M28 39 Q34 22 50 22 Q66 22 72 39 Q63 33 56 35 Q50 26 44 35 Q37 33 28 39 Z'
+        : style === 1
+          ? 'M27 40 Q32 21 50 21 Q68 21 73 40 Q64 32 57 36 Q53 27 46 34 Q38 31 27 40 Z'
+          : 'M27 38 Q35 20 50 20 Q65 20 73 38 Q62 31 54 34 Q50 24 45 33 Q36 31 27 38 Z';
+      return h('svg', {
+        viewBox: '0 0 100 100', width: '100%', height: '100%', preserveAspectRatio: 'xMidYMid slice',
+        style: { display: 'block', width: '100%', height: '100%' }, 'aria-hidden': 'true',
+      },
+        h('rect', { width: 100, height: 100, fill: 'hsl(' + hue + ' 38% 88%)' }),
+        h('circle', { cx: 50, cy: 52, r: 45, fill: 'hsl(' + hue2 + ' 45% 78%)', opacity: 0.45 }),
+        h('path', { d: 'M10 100 Q18 76 39 71 L61 71 Q82 76 90 100 Z', fill: 'hsl(' + hue2 + ' 32% 42%)' }),
+        h('rect', { x: 44, y: 62, width: 12, height: 12, rx: 4, fill: skin }),
+        h('path', { d: back, fill: hair }),
+        h('circle', { cx: 27, cy: 48, r: 4, fill: skin }),
+        h('circle', { cx: 73, cy: 48, r: 4, fill: skin }),
+        h('ellipse', { cx: 50, cy: 47, rx: 22, ry: 25, fill: skin }),
+        h('path', { d: fringe, fill: hair }),
+        h('path', { d: 'M35 42 Q39 40 43 42', stroke: hair, strokeWidth: 1.4, fill: 'none', opacity: 0.7, strokeLinecap: 'round' }),
+        h('path', { d: 'M57 42 Q61 40 65 42', stroke: hair, strokeWidth: 1.4, fill: 'none', opacity: 0.7, strokeLinecap: 'round' }),
+        h('ellipse', { cx: 39, cy: 50, rx: 5.2, ry: 6.4, fill: '#fff' }),
+        h('ellipse', { cx: 61, cy: 50, rx: 5.2, ry: 6.4, fill: '#fff' }),
+        h('circle', { cx: 39, cy: 50.5, r: 3.1, fill: eye }),
+        h('circle', { cx: 61, cy: 50.5, r: 3.1, fill: eye }),
+        h('circle', { cx: 39, cy: 50.5, r: 1.5, fill: '#231f2b' }),
+        h('circle', { cx: 61, cy: 50.5, r: 1.5, fill: '#231f2b' }),
+        h('circle', { cx: 40.2, cy: 49.2, r: 1.1, fill: '#fff' }),
+        h('circle', { cx: 62.2, cy: 49.2, r: 1.1, fill: '#fff' }),
+        h('path', { d: 'M48.5 57 Q50 58.2 51.5 57', stroke: '#b77965', strokeWidth: 1.1, fill: 'none', strokeLinecap: 'round' }),
+        h('path', { d: 'M46 63 Q50 65.5 54 63', stroke: '#a85757', strokeWidth: 1.3, fill: 'none', strokeLinecap: 'round' }),
+        h('ellipse', { cx: 31, cy: 59, rx: 4, ry: 2, fill: '#e88f8f', opacity: 0.32 }),
+        h('ellipse', { cx: 69, cy: 59, rx: 4, ry: 2, fill: '#e88f8f', opacity: 0.32 }),
+        style === 1 ? h('path', { d: 'M75 26 l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z', fill: 'hsl(' + hue2 + ' 70% 66%)' }) : null,
+      );
+    }
+
     function avatar(name, size, role) {
       const text = String(name || '?');
-      const initial = text.slice(0, 1);
       const art = artStyle(text, size);
       return h(
         'div',
@@ -431,6 +481,7 @@ window.__ModuleLoader__.load({
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            overflow: 'hidden',
             color: art.color,
             textShadow: art.textShadow,
             fontSize: size > 44 ? 24 : size > 26 ? 15 : 10.5,
@@ -442,7 +493,7 @@ window.__ModuleLoader__.load({
           },
           title: role ? role + ' · ' + text : text,
         },
-        initial,
+        h(AnimeFace, { name: text }),
       );
     }
 
@@ -539,7 +590,7 @@ window.__ModuleLoader__.load({
               onError: function () { setFailed(true); },
               style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
             })
-          : name.slice(0, 1),
+          : h(AnimeFace, { name: name }),
         props.showDot
           ? h('span', {
               style: {
@@ -2829,6 +2880,16 @@ window.__ModuleLoader__.load({
         );
       }
 
+      // 势力卡里的小头像也走 CharacterAvatar：人物形象确认/替换后随 book 刷新同步。
+      function factionMemberAvatar(m, size) {
+        const ch = (book.characters || []).find(function (x) { return x.id === m.id; });
+        return h(CharacterAvatar, {
+          name: m.name, size: size, role: m.role, characterId: m.id,
+          avatarInfo: (ch && ch.avatar) || (book.avatarMap && book.avatarMap[m.id]) || null,
+          face: face, project: activeProject(),
+        });
+      }
+
       // ── 设定 · 势力 ─────────────────────────────────────────────────────────
       function factionGrid() {
         if (!book.factions.length) {
@@ -2849,7 +2910,7 @@ window.__ModuleLoader__.load({
                   h('span', { style: { color: c.faint, fontSize: 10 } }, (f.members || []).length + ' 人'),
                 ),
                 h('div', { style: { display: 'flex', gap: 3, marginTop: 6 } },
-                  (f.members || []).slice(0, 4).map(function (m) { return avatar(m.name, 20, m.role); }),
+                  (f.members || []).slice(0, 4).map(function (m) { return factionMemberAvatar(m, 20); }),
                   (f.members || []).length > 4 ? h('span', { style: { color: c.faint, fontSize: 10, alignSelf: 'center' } }, '+' + (f.members.length - 4)) : null,
                 ),
               );
@@ -2873,7 +2934,7 @@ window.__ModuleLoader__.load({
               key: m.id, type: 'button',
               onClick: function () { if (ch) setSheet({ kind: 'character', id: ch.id }); },
               style: { display: 'flex', alignItems: 'center', gap: 7, width: '100%', appearance: 'none', background: 'transparent', border: 'none', borderBottom: '1px solid ' + c.border, padding: '5px 0', cursor: ch ? 'pointer' : 'default', fontFamily: 'inherit', textAlign: 'left' },
-            }, avatar(m.name, 24, m.role), h('span', { style: { color: c.text, fontSize: 12 } }, m.name), h('span', { style: { color: c.faint, fontSize: 10.5, marginLeft: 'auto' } }, m.role));
+            }, factionMemberAvatar(m, 24), h('span', { style: { color: c.text, fontSize: 12 } }, m.name), h('span', { style: { color: c.faint, fontSize: 10.5, marginLeft: 'auto' } }, m.role));
           }),
           sectionLabel('证据'),
           (f.evidence || []).map(function (ev, i) { return h('div', { key: 'fe' + i }, evidenceRow(ev, function () { openChapter(ev.chapter); })); }),
@@ -2883,60 +2944,105 @@ window.__ModuleLoader__.load({
       // ── 设定 · 关系 ─────────────────────────────────────────────────────────
       function relationView() {
         const people = book.matrix.people || [];
-        const find = function (fromId, toId) {
-          return (book.matrix.edges || []).find(function (e) { return e.from === fromId && e.to === toId; });
+        const edges = book.matrix.edges || [];
+        const relations = book.relations || [];
+        const byId = new Map((book.characters || []).map(function (ch) { return [ch.id, ch]; }));
+        const faceOf = function (id, name, size) {
+          const ch = byId.get(id);
+          return h(CharacterAvatar, {
+            name: name, size: size, role: ch ? ch.role : '', characterId: id,
+            avatarInfo: (ch && ch.avatar) || (book.avatarMap && book.avatarMap[id]) || null,
+            face: face, project: activeProject(),
+          });
         };
+        const byChapter = function (a, b) { return String(a.fromChapter || '').localeCompare(String(b.fromChapter || '')); };
+        const groups = [];
+        const groupBy = new Map();
+        edges.forEach(function (edge) {
+          const key = String(edge.from) + '>' + String(edge.to);
+          if (!groupBy.has(key)) {
+            const group = { key: key, from: edge.from, to: edge.to, fromName: edge.fromName, toName: edge.toName, edges: [] };
+            groupBy.set(key, group);
+            groups.push(group);
+          }
+          groupBy.get(key).edges.push(edge);
+        });
+        groups.forEach(function (group) {
+          group.edges.sort(byChapter);
+          const confirmed = group.edges.filter(function (e) { return e.status === 'confirmed'; });
+          group.primary = (confirmed.length ? confirmed[confirmed.length - 1] : group.edges[group.edges.length - 1]);
+        });
+        groups.sort(function (a, b) {
+          const ac = a.primary.status === 'confirmed' ? 0 : 1;
+          const bc = b.primary.status === 'confirmed' ? 0 : 1;
+          return ac - bc || byChapter(a.primary, b.primary);
+        });
+        const confirmedCount = groups.filter(function (g) { return g.primary.status === 'confirmed'; }).length;
+
         return h('div', { style: { padding: '9px 10px 96px' } },
-          h('div', { style: { color: c.faint, fontSize: 10.5, marginBottom: 7, lineHeight: 1.6 } },
-            '行 = 称呼者，列 = 被称呼者。格子里是公开称呼 / 私下称呼与改口章；点格子看证据。'),
-          h('div', { style: { overflowX: 'auto', border: '1px solid ' + c.border, borderRadius: 10 } },
-            h('table', { style: { borderCollapse: 'collapse', width: '100%', fontSize: 10.5 } },
-              h('thead', null,
-                h('tr', null,
-                  h('th', { style: { padding: '5px 6px', color: c.faint, textAlign: 'left', fontWeight: 500, borderBottom: '1px solid ' + c.border, position: 'sticky', left: 0, background: c.layer } }, '谁 \\ 叫谁'),
-                  people.map(function (p) {
-                    return h('th', { key: p.id, style: { padding: '5px 4px', color: c.sub, fontWeight: 600, textAlign: 'center', borderBottom: '1px solid ' + c.border, whiteSpace: 'nowrap' } }, p.name);
-                  }),
-                ),
-              ),
-              h('tbody', null,
-                people.map(function (row) {
-                  return h('tr', { key: row.id },
-                    h('th', { style: { padding: '5px 6px', color: c.sub, fontWeight: 600, textAlign: 'left', borderBottom: '1px solid ' + c.border, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: c.layer } }, row.name),
-                    people.map(function (col) {
-                      if (row.id === col.id) {
-                        return h('td', { key: col.id, style: { padding: '4px 5px', textAlign: 'center', color: c.border2, borderBottom: '1px solid ' + c.border } }, '—');
-                      }
-                      const edge = find(row.id, col.id);
-                      const tone = edge ? (edge.status === 'confirmed' ? c.text : c.warn) : c.faint;
-                      return h('td', {
-                        key: col.id,
-                        onClick: edge ? function () { setSheet({ kind: 'edge', id: edge.id }); } : undefined,
-                        style: { padding: '4px 5px', textAlign: 'center', borderBottom: '1px solid ' + c.border, color: tone, cursor: edge ? 'pointer' : 'default', lineHeight: 1.35 },
-                      }, edge
-                        ? h('span', null,
-                            edge.publicForm || edge.form,
-                            edge.privateForm && edge.privateForm !== (edge.publicForm || edge.form)
-                              ? h('span', { style: { display: 'block', color: c.faint, fontSize: 9.5 } }, '私下 ' + edge.privateForm) : null,
-                            h('span', { style: { display: 'block', color: c.faint, fontSize: 9 } }, edge.fromChapter || ''),
-                          )
-                        : '·');
-                    }),
-                  );
-                }),
-              ),
+          h('div', { className: 'fic-card', style: { padding: '10px 11px', marginBottom: 9, background: c.layer2 } },
+            h('div', { style: { color: c.text, fontSize: 12.5, fontWeight: 600 } }, '关系卡'),
+            h('div', { style: { color: c.faint, fontSize: 10, lineHeight: 1.6, marginTop: 3 } },
+              '箭头 = 谁称呼谁；已确认优先，否则取最近一条；改口记录按章展开。点卡看证据。',
+            ),
+            h('div', { style: { display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' } },
+              chip(groups.length + ' 对关系', c.brand),
+              chip(confirmedCount + ' 已确认', c.success),
+              chip((groups.length - confirmedCount) + ' 待确认', c.warn),
             ),
           ),
-          sectionLabel('关系事实', h('span', { style: { color: c.faint, fontSize: 10.5 } }, (book.relations || []).length + ' 条')),
-          (book.relations || []).length
-            ? book.relations.map(function (r) {
-                return h(card, { key: r.id, padding: '7px 10px', style: { marginBottom: 6 }, onClick: function () { if (r.evidence[0]) openChapter(r.evidence[0].chapter); } },
+          groups.length
+            ? groups.map(function (group) {
+                const edge = group.primary;
+                const publicForm = edge.publicForm || edge.form || '—';
+                const privateForm = edge.privateForm && edge.privateForm !== publicForm ? edge.privateForm : '';
+                const quote = edge.evidence && edge.evidence[0] ? edge.evidence[0].quote : '';
+                return h(card, {
+                  key: group.key, padding: '9px 10px', style: { marginBottom: 8 },
+                  onClick: function () { setSheet({ kind: 'edge', id: edge.id }); },
+                },
+                  h('div', { style: { display: 'flex', alignItems: 'center', gap: 7 } },
+                    faceOf(group.from, group.fromName, 30),
+                    h('div', { style: { flex: 1, minWidth: 0 } },
+                      h('div', { style: { display: 'flex', alignItems: 'baseline', gap: 4, minWidth: 0 } },
+                        h('span', { style: { color: c.text, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, group.fromName),
+                        h('span', { style: { color: c.faint, fontSize: 11 } }, '→'),
+                        h('span', { style: { color: c.text, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, group.toName),
+                        h('span', { style: { marginLeft: 'auto', flexShrink: 0 } }, statusChip(edge.status)),
+                      ),
+                      h('div', { style: { color: c.sub, fontSize: 10.5, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } },
+                        '公开 ' + publicForm + (privateForm ? ' · 私下 ' + privateForm : '') + (edge.fromChapter ? ' · ' + edge.fromChapter + ' 起' : ''),
+                      ),
+                    ),
+                    faceOf(group.to, group.toName, 30),
+                  ),
+                  quote ? h('div', { style: { color: c.faint, fontSize: 10, lineHeight: 1.5, marginTop: 5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } }, '「' + quote + '」') : null,
+                  group.edges.length > 1
+                    ? h('div', { style: { marginTop: 5, paddingTop: 5, borderTop: '1px dashed ' + c.border } },
+                        h('div', { style: { color: c.faint, fontSize: 9, marginBottom: 3 } }, '改口记录 ' + group.edges.length + ' 次'),
+                        group.edges.map(function (e, i) {
+                          return h('div', { key: e.id, style: { display: 'flex', gap: 5, color: c.faint, fontSize: 9.5, lineHeight: 1.5 } },
+                            h('span', { style: { minWidth: 30 } }, e.fromChapter || '—'),
+                            h('span', { style: { flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } },
+                              (e.publicForm || e.form || '—') + (e.privateForm && e.privateForm !== (e.publicForm || e.form) ? ' / 私下 ' + e.privateForm : '')),
+                            h('span', { style: { color: e.id === group.primary.id ? c.success : c.faint } }, e.id === group.primary.id ? '主' : ''),
+                          );
+                        }),
+                      )
+                    : null,
+                );
+              })
+            : h('div', { className: 'fic-card', style: { color: c.faint, fontSize: 11, lineHeight: 1.6, textAlign: 'center', padding: '18px 12px' } }, '还没有可展示的称呼关系。'),
+          sectionLabel('关系事实', h('span', { style: { color: c.faint, fontSize: 10.5 } }, relations.length + ' 条')),
+          relations.length
+            ? relations.map(function (r) {
+                return h(card, { key: r.id, padding: '7px 10px', style: { marginBottom: 6 }, onClick: function () { if (r.evidence && r.evidence[0]) openChapter(r.evidence[0].chapter); } },
                   h('div', { style: { display: 'flex', gap: 6, alignItems: 'baseline' } },
-                    h('span', { style: { color: c.text, fontSize: 11.5, fontWeight: 600 } }, r.from),
-                    h('span', { style: { color: c.sub, fontSize: 11.5, flex: 1, minWidth: 0 } }, r.text),
+                    h('span', { style: { color: c.text, fontSize: 11.5, fontWeight: 600, whiteSpace: 'nowrap' } }, r.from),
+                    h('span', { style: { color: c.sub, fontSize: 11, flex: 1, minWidth: 0 } }, r.text),
                     statusChip(r.status),
                   ),
-                  h('div', { style: { color: c.faint, fontSize: 10, marginTop: 2 } }, r.chapter + ' · ' + (r.evidence[0] ? r.evidence[0].quote : '')),
+                  h('div', { style: { color: c.faint, fontSize: 10, marginTop: 2 } }, r.chapter + (r.evidence && r.evidence[0] ? ' · 「' + r.evidence[0].quote + '」' : '')),
                 );
               })
             : h('div', { style: { color: c.faint, fontSize: 11.5 } }, '还没有关系事实。'),

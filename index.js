@@ -965,6 +965,17 @@ export function apply(ctx, config = {}) {
               : { status: row?.status || 'none' },
           };
         });
+        // 侧栏人物卡只传前 60 人；势力/关系里可能引用更多角色，单独给一份确认头像索引。
+        out.book.avatarMap = {};
+        for (const [id, row] of Object.entries(avatars.characters || {})) {
+          if (!row || row.status !== 'confirmed') continue;
+          out.book.avatarMap[id] = {
+            status: 'confirmed',
+            hash: row.hash,
+            sourceKind: row.source?.kind || 'upload',
+            credit: row.source?.credit || '',
+          };
+        }
       } catch (error) {
         out.avatars = { error: String(error?.message || error) };
       }
