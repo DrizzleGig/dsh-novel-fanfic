@@ -11,7 +11,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import os from 'node:os'
 import path from 'node:path'
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { apply } from '../index.js'
 import { DESCRIPTORS, TYPERT_REMOTE } from '../lib/remote-contract.js'
@@ -46,6 +46,10 @@ test('Host 提供 novelFanficPanelView，与 /fic 共用 handler，且不需要�
   assert.ok(view, '要提供 novelFanficPanelView')
   assert.equal(view.apiVersion, 1)
   assert.equal(typeof view.dispatch, 'function')
+  assert.equal(typeof view.getAvatar, 'function')
+  assert.equal(typeof view.avatar, 'function')
+  assert.equal(typeof view.media, 'function')
+  assert.equal(typeof view.analysis, 'function')
 
   const agent = { id: 'session-panel', session: { id: 'session-panel' } }
   const result = await view.dispatch(agent, 'status --json')
@@ -54,11 +58,11 @@ test('Host 提供 novelFanficPanelView，与 /fic 共用 handler，且不需要�
   assert.ok(snapshot && typeof snapshot === 'object')
 })
 
-test('remote 契约：12 个方法、namespace/service 固定，客户端内嵌协议与 Host 一致', () => {
+test('remote 契约：16 个方法、namespace/service 固定，客户端内嵌协议与 Host 一致', () => {
   const methods = DESCRIPTORS.map((descriptor) => descriptor.method).sort()
   assert.deepEqual(methods, [
-    'checkDraft', 'getChapter', 'getContract', 'getDeltas', 'getPanel', 'getPlan', 'identity',
-    'listImportFiles', 'listProjects', 'pickDirectory', 'previewImport', 'search',
+    'analysis', 'avatar', 'checkDraft', 'getAvatar', 'getChapter', 'getContract', 'getDeltas', 'getPanel', 'getPlan', 'identity',
+    'listImportFiles', 'listProjects', 'media', 'pickDirectory', 'previewImport', 'search',
   ])
   for (const descriptor of DESCRIPTORS) {
     assert.equal(descriptor.namespace, 'novelFanficPanel')
@@ -76,6 +80,83 @@ test('remote 契约：12 个方法、namespace/service 固定，客户端内嵌�
       `client.js 的协议里缺少 ${method}`,
     )
   }
+})
+
+test('面板头像动作：status/set/get/remove 走 view，不经过命令通道', async () => {
+  const { ctx, services, commands } = host()
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'fanfic-panel-avatar-'))
+  const projectDir = path.join(dir, '.dsh-novel-fanfic', 'demo')
+  mkdirSync(projectDir, { recursive: true })
+  writeFileSync(path.join(projectDir, 'project.json'), JSON.stringify({ id: 'demo', title: 'demo', revision: 0, schemaVersion: 1 }))
+  apply(ctx, { root: dir, stateDir: dir })
+  const view = services.get('novelFanficPanelView')
+  const agent = { id: 'session-avatar', session: { id: 'session-avatar' } }
+  const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII='
+
+  const before = await view.avatar(agent, { action: 'status', project: 'demo' })
+  assert.equal(before.ok, true)
+  assert.equal(before.summary.confirmed, 0)
+
+  await assert.rejects(
+    view.avatar(agent, { action: 'set', project: 'demo', characterId: 'c1', dataBase64: png }),
+    /作者确认/,
+  )
+  const set = await view.avatar(agent, {
+    action: 'set', project: 'demo', characterId: 'c1', name: '唐三', dataBase64: png, confirm: true,
+    source: { kind: 'upload' },
+  })
+  assert.equal(set.ok, true)
+  assert.equal(set.assetRevision, 1)
+
+  const got = await view.getAvatar(agent, { project: 'demo', characterId: 'c1' })
+  assert.equal(got.ok, true)
+  assert.equal(got.base64, png)
+
+  const after = await view.avatar(agent, { action: 'status', project: 'demo' })
+  assert.equal(after.summary.confirmed, 1)
+
+  const removed = await view.avatar(agent, { action: 'remove', project: 'demo', characterId: 'c1', confirm: true })
+  assert.equal(removed.removed, true)
+  assert.equal((await view.getAvatar(agent, { project: 'demo', characterId: 'c1' })).reason, 'none')
+  assert.equal(commands.filter((entry) => entry.name === 'fic').length, 1, '未通过 commands.execute')
+})
+
+test('面板媒体动作：list/add_comic/verify/remove 走 view', async () => {
+  const { ctx, services } = host()
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'fanfic-panel-media-'))
+  const projectDir = path.join(dir, '.dsh-novel-fanfic', 'demo')
+  mkdirSync(projectDir, { recursive: true })
+  writeFileSync(path.join(projectDir, 'project.json'), JSON.stringify({ id: 'demo', title: 'demo', revision: 0, schemaVersion: 1 }))
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', 'base64')
+  writeFileSync(path.join(dir, 'page.png'), png)
+  apply(ctx, { root: dir, stateDir: dir })
+  const view = services.get('novelFanficPanelView')
+  const agent = { id: 'session-media', session: { id: 'session-media' } }
+
+  const empty = await view.media(agent, { action: 'list', project: 'demo' })
+  assert.equal(empty.sources.length, 0)
+
+  await assert.rejects(
+    view.media(agent, { action: 'add_comic', project: 'demo', file: 'page.png' }),
+    /作者确认/,
+  )
+  const added = await view.media(agent, {
+    action: 'add_comic', project: 'demo', file: 'page.png', title: '第一话', confirm: true,
+  })
+  assert.equal(added.source.kind, 'comic')
+  assert.equal(added.source.pageCount, 1)
+
+  const listed = await view.media(agent, { action: 'list', project: 'demo' })
+  assert.equal(listed.sources.length, 1)
+  const image = await view.media(agent, { action: 'comic_page_image', project: 'demo', sourceId: added.source.id, page: 0 })
+  assert.equal(image.ok, true)
+  assert.equal(image.mime, 'image/png')
+  assert.equal(image.dataUrl.startsWith('data:image/png;base64,'), true)
+  const report = await view.analysis(agent, { action: 'overview', project: 'demo' })
+  assert.equal(report.ok, true)
+  assert.match(report.text, /导入分析 · 总览/)
+  const removed = await view.media(agent, { action: 'remove', project: 'demo', sourceId: added.source.id, confirm: true })
+  assert.equal(removed.removed, true)
 })
 
 test('0.2.3 源码守卫：客户端读适配器不再拼 /fic 读命令', () => {

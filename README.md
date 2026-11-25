@@ -4,16 +4,19 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/DrizzleGig/dsh-novel-fanfic/blob/main/LICENSE)
 [![stars](https://img.shields.io/github/stars/DrizzleGig/dsh-novel-fanfic)](https://github.com/DrizzleGig/dsh-novel-fanfic/stargazers)
 
-## 本版本（v0.2.3，2026-11-22）
+## 本版本（v0.4.2，2026-11-26）
 
-- **修：打开/刷新右栏「同人」面板不再往对话里写命令行**。0.2.2 之前面板取数走 `/fic panel --json` 等命令，而 DSH 的 `commands.execute()` 每次都会往会话日志追加 `command/run` + `command/done`——实测单个会话累计 51 行「fic」命令卡。现在读数据走 `novelFanficPanel` remote（Host 进程内调用，与 `/fic` 共用同一个 handler），**读操作零命令事件**；`/fic on|off`、任务卡保存、确认/拒绝/裁决、导入等写操作仍走命令（一次点击一行，是审计）。
-- **修：`/fic search` 的 `--limit 20` 曾被拼进搜索词**（变成搜「阿砚 20」）。面板走 remote 后直接传 `{ term, limit }`；CLI 也排除了 `--limit` 的取值。
-- **修：确认 / 拒绝 / 裁决现在显式带当前项目**，不再依赖全局「当前项目」偏好（多项目时不会写错）。
-- **修：保存任务卡不再重复刷新**（原来一次保存会触发两轮读，最多 10 条事件；现在 6 条且读的部分为 0）。
-- 面板读接口与 Host 版本不匹配时明确报「请更新并重载 DSH」，**不会悄悄退回读命令**（否则污染重现）。
-- 测试 **176 → 179**（新增 panel remote 契约与「读不发命令」回归）。
+> 0.2.x / v0.1 段落保留为历史；当前能力以本节和 CHANGELOG 为准。
 
-## 上一版（v0.2.2，2026-11-21）
+- **人物形象（0.4.0）**：人物卡 44px / 详情 64px 头像；Bangumi / AniList / Kitsu 官方角色图、百度网页搜图（Bing 可选）、本地上传；作者确认后才写入，hash/stale 失效回退；20 张真实官方图裁剪入库 20/20 confirmed。
+- **红果短剧（0.4.1）**：内置 `openhongguo` WASM；按短剧名称搜索 → 选一条登记 → 看分集/弹幕；只取元数据/分集/弹幕，**不暴露/不调用 `resolvePlayback`，不存播放地址或内容密钥**。
+- **本地漫画（0.4.1）**：CBZ/ZIP、图片目录、单图；Windows 内置 System.Drawing 读灰度、纯 JS 投影分格、Windows 内置 OCR；逐格 OCR 按面板顺序拼文本；只读选中页，临时文件完成后删除。
+- **媒体账本（0.4.1）**：`media.json` 登记来源与最小证据；`mediaRevision` 独立；来源文件只存外部路径+hash，不复制整本/整集；`media_verify` 校验 stale/invalid/unverified。
+- **导入分析（0.4.2）**：`fic_analyze` 输出总览/关系/时间线/AU/读者假设；只统计已确认 canon；剧情→分析 UI + Markdown 导出。
+- **UI**：一级导航「原著 / 漫画 / 红果 / 本作 / 剧情 / 写作」；漫画/红果与小说原著并列，人物/势力/关系等仍是原著下位；漫画支持路径 + 原生文件夹选择、页面图 + 分格框叠加。
+- 测试 **231/231**；`npm run check` 与 `check:licenses` 通过；游戏解包排 0.6.0，不属于本版。
+
+## 上一版（v0.2.3，2026-11-22）
 
 - **装了故事总控时，开关由它决定**：总控关着 → 同人工具一个都不工作（哪怕 `/fic on` 过）；总控开着 → 可用（哪怕没 `/fic on`）。没装故事总控时，照旧按 `/fic on|off`。
 - `/fic` 状态改成「可用 / 不可用（独立开关：开/关）」，并直接说明当前由谁管。
@@ -86,7 +89,7 @@ dsh plugin --profile web add github:DrizzleGig/dsh-novel-fanfic
 /fic on
 ```
 
-开启后，`fic_state` / `fic_source` / `fic_contract` / `fic_check` / `fic_lookup` 五个工具才进入模型工具表；关掉用 `/fic off`。
+开启后，`fic_analyze` / `fic_avatar` / `fic_check` / `fic_contract` / `fic_lookup` / `fic_plan` / `fic_source` / `fic_state` 八个工具才进入模型工具表；关掉用 `/fic off`。
 
 ### 3. 导入原著
 
@@ -198,7 +201,7 @@ v0.1 只支持 TXT / Markdown（UTF-8 或 GB18030，≤20 MB）。导入后自�
 
 | 命令 | 作用 |
 |---|---|
-| `/fic on` / `/fic off` | 启用 / 收起五个工具（默认关闭） |
+| `/fic on` / `/fic off` | 启用 / 收起八个工具（默认关闭） |
 | `/fic status` | 看夹具、canon 计数、本作设定条数、契约漂移 |
 | `/fic import <文件>` | 导入原著（TXT / Markdown） |
 | `/fic panel` | 侧边栏用的完整视图（总览 / 设定 / 剧情 / 原文） |
@@ -255,15 +258,15 @@ Canon 是原著事实；Fic Canon 是「这一版同人正式生效的设定」�
 | 插件列表名 | 同人 |
 | 面板名 | 同人工作室 |
 | 包名 | `dsh-novel-fanfic` |
-| 版本 | v0.1.0 |
+| 版本 | v0.4.2 |
 | 运行环境 | Node.js ≥ 20 |
-| 外部依赖 | 零依赖 |
-| 输入格式 | TXT / Markdown（UTF-8 / GB18030，≤20 MB） |
-| 数据目录 | `.dsh-novel-fanfic/<project>/` |
-| 工具 | `fic_state` / `fic_source` / `fic_contract` / `fic_check` / `fic_lookup` |
+| 外部依赖 | 零运行时依赖；红果 WASM 已 vendored |
+| 输入格式 | 原著 TXT / Markdown（UTF-8 / GB18030，≤20 MB）；漫画 CBZ/ZIP/图片；红果按名称搜索 |
+| 数据目录 | `.dsh-novel-fanfic/<project>/`（含 `avatars.json`、`media.json`） |
+| 工具 | `fic_analyze` / `fic_avatar` / `fic_check` / `fic_contract` / `fic_lookup` / `fic_plan` / `fic_source` / `fic_state` |
 | 契约 | 九段 + 有本作设定时追加【本作】，总预算 ≤800 字 |
 | 检查器 | 12 项确定性检测；每条 finding 带位置 / 依据 / canonRef；OOC 只覆盖可核对的部分，不做 LLM 评分 |
-| 测试 | `npm test` 140/140 |
+| 测试 | `npm test` 231/231 |
 | 默认状态 | 关闭（`/fic on` 启用） |
 | 许可 | MIT |
 

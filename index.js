@@ -20,6 +20,13 @@ import { ingestFile, readSourceText, splitChapters, bookTitleOf, MAX_BYTES } fro
 import { sha256 } from './lib/hash.mjs';
 import { confirmEntries, rejectEntries, resolveContradiction } from './lib/proposals.mjs';
 import { buildBook } from './lib/views.mjs';
+import { avatarSummary, loadAvatars, removeAvatar, resolveAvatar, setAvatar } from './lib/avatars.mjs';
+import { listCharacters, matchCharacters, searchWebImages, searchWorks } from './lib/avatar-sources.mjs';
+import { fetchImageBase64 } from './lib/avatar-fetch.mjs';
+import { hongguoDanmaku, hongguoEpisodes, hongguoSearch, hongguoSeries } from './lib/hongguo.mjs';
+import { listComicPages, ocrComicPages, detectComicPanels, ocrComicPanels, extractComicPage } from './lib/comic.mjs';
+import { analyzeBook, confirmedCanon } from './lib/analysis.mjs';
+import { addComicSource, addHongguoSource, addMediaEvidence, listMedia, removeMediaSource, verifyMediaEvidence } from './lib/media.mjs';
 import {
   loadDeclarations, saveDeclarations, declarationFile,
   addAuRule, removeAuRule, addHeadcanon, removeHeadcanon, addTypo, removeTypo,
@@ -333,17 +340,38 @@ export function apply(ctx, config = {}) {
     description:
       '管理原著来源。action=import（file=本地 txt/md 路径，UTF-8 或 GB18030，≤20MB，重复文件会被 sha256 拦下）、'
       + 'action=list（列出已导入的章节）、action=read（chapter=chNNN，读该章正文）、action=index（读确定性索引：人物候选/称呼/统计）。'
+      + 'action=hongguo_search / hongguo_series / hongguo_episodes / hongguo_danmaku 读红果短剧元数据/分集/弹幕（只读；不取播放地址/内容密钥）。'
+      + 'action=comic_list 列本地 CBZ/ZIP/图片目录页；action=comic_panels 对单页分格；action=comic_ocr 只对选中页做 Windows 内置 OCR（split=true 先分格再逐格 OCR；不整本、不装外部 OCR）。'
+      + 'action=media_list/media_add_comic/media_add_hongguo/media_add_evidence/media_remove 登记项目媒体来源与最小证据（不复制整本/整集，不存播放地址）。'
+      + 'action=media_verify 只读校验来源 hash/页集定位；红果无本地源时标 unverified。'
       + '导入只做存储与分章，不生成 canon；canon 走提案与人工确认。',
     parameters: parameterSchema({
       action: {
         type: 'string',
         required: true,
-        enum: ['import', 'list', 'read', 'index'],
-        description: 'import | list | read | index。',
+        enum: ['import', 'list', 'read', 'index', 'hongguo_search', 'hongguo_series', 'hongguo_episodes', 'hongguo_danmaku', 'comic_list', 'comic_panels', 'comic_ocr', 'media_list', 'media_add_comic', 'media_add_hongguo', 'media_add_evidence', 'media_remove', 'media_verify'],
+        description: 'import | list | read | index | hongguo_* | comic_* | media_*。',
       },
-      file: { type: 'string', description: 'action=import 时的本地文件路径。' },
+      file: { type: 'string', description: 'action=import/comic_list/comic_ocr 时的本地文件/目录路径。' },
       chapter: { type: 'string', description: 'action=read 时的章节 id，如 ch002。' },
       limit: { type: 'integer', description: 'action=read 时最多返回多少字，默认 4000。' },
+      query: { type: 'string', description: 'action=hongguo_search 的剧名关键词。' },
+      seriesId: { type: 'string', description: 'action=hongguo_series/hongguo_episodes/hongguo_danmaku 的剧 id。' },
+      episodeId: { type: 'string', description: 'action=hongguo_danmaku 的分集 id。' },
+      pageSize: { type: 'integer', description: '红果分页大小，默认 20。' },
+      cursor: { type: 'string', description: '红果翻页游标（可选）。' },
+      pages: { type: 'array', items: { type: 'integer' }, description: 'action=comic_ocr 的页码数组（从 0 开始，最多 30 页）。' },
+      split: { type: 'boolean', description: 'action=comic_ocr 是否先分格再逐格 OCR（默认 false）。' },
+      page: { type: 'integer', description: 'action=comic_panels 的页码（从 0 开始，默认 0）。' },
+      sourceId: { type: 'string', description: 'action=media_add_evidence/media_remove 的来源 id。' },
+      title: { type: 'string', description: 'action=media_add_comic/media_add_hongguo 的标题。' },
+      coverUrl: { type: 'string', description: 'action=media_add_hongguo 的封面 URL。' },
+      kind: { type: 'string', description: 'action=media_add_evidence 的证据类型。' },
+      locator: { type: 'object', description: 'action=media_add_evidence 的定位（page/panel/episode/time 等）。' },
+      quote: { type: 'string', description: 'action=media_add_evidence 的短引文/OCR 文本。' },
+      method: { type: 'string', description: 'action=media_add_evidence 的采集方法（manual/ocr/subtitle）。' },
+      hash: { type: 'string', description: 'action=media_add_evidence 的源/帧 hash（可选）。' },
+      confirm: { type: 'boolean', description: 'action=media_add_*/media_remove 必须为 true，表示作者已确认。' },
       project: { type: 'string', description: '项目名。' },
       root: { type: 'string', description: '工作目录。' },
     }),
@@ -360,6 +388,156 @@ export function apply(ctx, config = {}) {
           `已导入 ${res.sourceId}：${res.chapters.length} 章 / ${res.meta?.chars ?? '?'} 字（${res.encoding || res.meta?.encoding}）。`
           + `\n章节：${res.chapters.slice(0, 12).map((ch) => ch.id).join('、')}${res.chapters.length > 12 ? `…（共 ${res.chapters.length} 章）` : ''}`,
         );
+      }
+      if (action === 'hongguo_search') {
+        try {
+          const result = await hongguoSearch(String(args?.query || ''), {
+            pageSize: Number(args?.pageSize) || 20,
+            cursor: args?.cursor || undefined,
+          });
+          return ok(JSON.stringify(result, null, 2));
+        } catch (error) {
+          return fail(`红果搜索失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'hongguo_series') {
+        if (!args?.seriesId) return fail('action=hongguo_series 需要 seriesId。');
+        try {
+          return ok(JSON.stringify(await hongguoSeries(String(args.seriesId)), null, 2));
+        } catch (error) {
+          return fail(`红果剧集读取失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'hongguo_episodes') {
+        if (!args?.seriesId) return fail('action=hongguo_episodes 需要 seriesId。');
+        try {
+          const result = await hongguoEpisodes(String(args.seriesId), {
+            pageSize: Number(args?.pageSize) || 20,
+            cursor: args?.cursor || undefined,
+          });
+          return ok(JSON.stringify(result, null, 2));
+        } catch (error) {
+          return fail(`红果分集读取失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'hongguo_danmaku') {
+        if (!args?.seriesId || !args?.episodeId) return fail('action=hongguo_danmaku 需要 seriesId 和 episodeId。');
+        try {
+          const result = await hongguoDanmaku(String(args.seriesId), String(args.episodeId), {
+            pageSize: Number(args?.pageSize) || 20,
+            cursor: args?.cursor || undefined,
+          });
+          return ok(JSON.stringify(result, null, 2));
+        } catch (error) {
+          return fail(`红果弹幕读取失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'comic_list') {
+        if (!args?.file) return fail('action=comic_list 需要 file。');
+        try {
+          return ok(JSON.stringify(await listComicPages(path.resolve(c.root, String(args.file))), null, 2));
+        } catch (error) {
+          return fail(`漫画读取失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'comic_ocr') {
+        if (!args?.file) return fail('action=comic_ocr 需要 file。');
+        try {
+          if (args?.split) {
+            const pages = (Array.isArray(args?.pages) && args.pages.length ? args.pages : [0])
+              .map((n) => Number(n)).filter((n) => Number.isInteger(n) && n >= 0).slice(0, 30);
+            if (!pages.length) return fail('action=comic_ocr 的 pages 没有有效页码。');
+            const results = [];
+            for (const page of pages) {
+              results.push(await ocrComicPanels(path.resolve(c.root, String(args.file)), page));
+            }
+            return ok(JSON.stringify({
+              ok: results.some((result) => result.ok),
+              split: true,
+              pages: results,
+              text: results.map((result) => result.text || '').filter(Boolean).join('\n\n'),
+              chars: results.reduce((sum, result) => sum + (result.chars || 0), 0),
+            }, null, 2));
+          }
+          return ok(JSON.stringify(await ocrComicPages(
+            path.resolve(c.root, String(args.file)),
+            Array.isArray(args?.pages) ? args.pages : [0],
+          ), null, 2));
+        } catch (error) {
+          return fail(`漫画 OCR 失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'comic_panels') {
+        if (!args?.file) return fail('action=comic_panels 需要 file。');
+        try {
+          return ok(JSON.stringify(await detectComicPanels(
+            path.resolve(c.root, String(args.file)),
+            Number(args?.page) || 0,
+          ), null, 2));
+        } catch (error) {
+          return fail(`漫画分格失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'media_list') {
+        try {
+          return ok(JSON.stringify(await listMedia(c.root, c.project), null, 2));
+        } catch (error) {
+          return fail(`媒体来源读取失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'media_add_comic') {
+        if (!args?.file) return fail('action=media_add_comic 需要 file。');
+        if (args?.confirm !== true) return fail('action=media_add_comic 需要作者确认 confirm:true。');
+        try {
+          return ok(JSON.stringify(await addComicSource(c.root, c.project, {
+            file: path.resolve(c.root, String(args.file)), title: args?.title,
+          }), null, 2));
+        } catch (error) {
+          return fail(`漫画来源登记失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'media_add_hongguo') {
+        if (!args?.seriesId) return fail('action=media_add_hongguo 需要 seriesId。');
+        if (args?.confirm !== true) return fail('action=media_add_hongguo 需要作者确认 confirm:true。');
+        try {
+          return ok(JSON.stringify(await addHongguoSource(c.root, c.project, {
+            seriesId: args.seriesId, title: args?.title, coverUrl: args?.coverUrl,
+          }), null, 2));
+        } catch (error) {
+          return fail(`红果来源登记失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'media_add_evidence') {
+        if (!args?.sourceId || !args?.quote) return fail('action=media_add_evidence 需要 sourceId 和 quote。');
+        if (args?.confirm !== true) return fail('action=media_add_evidence 需要作者确认 confirm:true。');
+        try {
+          return ok(JSON.stringify(await addMediaEvidence(c.root, c.project, {
+            sourceId: args.sourceId,
+            kind: args?.kind,
+            locator: args?.locator,
+            quote: args.quote,
+            method: args?.method,
+            hash: args?.hash,
+          }), null, 2));
+        } catch (error) {
+          return fail(`媒体证据登记失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'media_remove') {
+        if (!args?.sourceId) return fail('action=media_remove 需要 sourceId。');
+        if (args?.confirm !== true) return fail('action=media_remove 需要作者确认 confirm:true。');
+        try {
+          return ok(JSON.stringify(await removeMediaSource(c.root, c.project, String(args.sourceId)), null, 2));
+        } catch (error) {
+          return fail(`媒体来源删除失败：${String(error?.message || error)}`);
+        }
+      }
+      if (action === 'media_verify') {
+        try {
+          return ok(JSON.stringify(await verifyMediaEvidence(c.root, c.project), null, 2));
+        } catch (error) {
+          return fail(`媒体证据校验失败：${String(error?.message || error)}`);
+        }
       }
       let project;
       try {
@@ -617,6 +795,77 @@ export function apply(ctx, config = {}) {
     },
   }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
 
+  // ── 工具 7：人物形象（0.4.0）──────────────────────────────────────────────
+  ctx.tools.register({
+    name: 'fic_avatar',
+    description:
+      '人物形象：官方来源（Bangumi/AniList/Kitsu）、网页搜图（Bing/百度）、本地上传。'
+      + 'action=status 看覆盖；search_works 查作品；list_characters 列来源角色；match 把 canon 人物与来源角色做候选匹配；'
+      + 'web_search 查网页图；set 写确认图（必须 confirm:true + dataBase64）；remove 删除（必须 confirm:true）。'
+      + '图片只存本地项目，不改 canon、不进契约、不随 npm 包分发。',
+    parameters: parameterSchema({
+      action: {
+        type: 'string', required: true,
+        enum: ['status', 'search_works', 'list_characters', 'match', 'web_search', 'fetch_image', 'set', 'remove'],
+        description: 'status | search_works | list_characters | match | web_search | fetch_image | set | remove。',
+      },
+      query: { type: 'string', description: 'search_works/web_search 的查询词，如「斗罗大陆 唐三 动画 形象」。' },
+      url: { type: 'string', description: 'fetch_image 的图片 URL；只允许已知 CDN/缩略图域。' },
+      source: { type: 'string', enum: ['bangumi', 'anilist', 'kitsu'], description: 'list_characters/match 的来源。' },
+      sourceId: { type: 'string', description: 'list_characters/match 的来源作品 ID。' },
+      characterId: { type: 'string', description: 'set/remove 的 canon 人物 ID。' },
+      characterName: { type: 'string', description: 'set 时的人物名（仅展示/回查）。' },
+      dataBase64: { type: 'string', description: 'set 时的 PNG/JPEG/WebP base64（可带 data: 前缀）；≤512KB、正方形。' },
+      engine: { type: 'string', enum: ['bing', 'baidu'], description: 'web_search 的引擎，默认 baidu。' },
+      limit: { type: 'integer', description: 'web_search 返回条数，默认 12，最多 24。' },
+      confirm: { type: 'boolean', description: 'set/remove 必须显式 true，表示作者已确认。' },
+      project: { type: 'string', description: '项目名。' },
+      root: { type: 'string', description: '工作目录。' },
+    }),
+    output: output(),
+    async execute(args) {
+      try {
+        const result = await avatarAction(args || {});
+        return ok(JSON.stringify(result, null, 2));
+      } catch (error) {
+        return fail(String(error?.message || error));
+      }
+    },
+  }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
+
+  // ── 工具 8：导入分析（0.4.2）──────────────────────────────────────────────
+  ctx.tools.register({
+    name: 'fic_analyze',
+    description:
+      '从已确认 canon 生成可回查的导入分析：action=overview 总览与覆盖；relations 关系/称呼；timeline 事件与伏笔；'
+      + 'au 本作改动影响面；reader 读者视角假设。只统计已确认 canon；pending 不算事实；推断/假设单独标注；不自动改正文。'
+      + 'OOC 逐句检查请用 fic_check。',
+    parameters: parameterSchema({
+      action: {
+        type: 'string', required: true,
+        enum: ['overview', 'relations', 'timeline', 'au', 'reader'],
+        description: 'overview | relations | timeline | au | reader。',
+      },
+      project: { type: 'string', description: '项目名。' },
+      root: { type: 'string', description: '工作目录。' },
+    }),
+    output: output(),
+    async execute(args) {
+      try {
+        const result = await analysisReport(args || {});
+        return {
+          ...ok(result.text),
+          status: 'completed',
+          action: result.action,
+          project: result.project,
+          revision: result.revision,
+        };
+      } catch (error) {
+        return fail(`分析失败：${String(error?.message || error)}\n先导入原著并确认 canon。`);
+      }
+    },
+  }, { when: (context) => effectiveOn(isOn(context.agent), keyOf(context.agent)) });
+
   // 侧边栏总览的数据源：一次取齐夹具统计 + canon 计数 + 契约漂移。
   async function statusSnapshot(args = {}, key = '') {
     const c = ctxOf(args);
@@ -699,6 +948,26 @@ export function apply(ctx, config = {}) {
         }
       }
       out.book = buildBook({ canon: loaded.canon, project: loaded.project, chapters: out.chapters, texts });
+      try {
+        const avatars = await loadAvatars(c.root, c.project);
+        out.avatars = { assetRevision: avatars.assetRevision, summary: avatarSummary(avatars) };
+        out.book.characters = (out.book.characters || []).map((ch) => {
+          const row = avatars.characters[ch.id];
+          return {
+            ...ch,
+            avatar: row && row.status === 'confirmed'
+              ? {
+                  status: 'confirmed',
+                  hash: row.hash,
+                  sourceKind: row.source?.kind || 'upload',
+                  credit: row.source?.credit || '',
+                }
+              : { status: row?.status || 'none' },
+          };
+        });
+      } catch (error) {
+        out.avatars = { error: String(error?.message || error) };
+      }
       for (const bucket of CANON_FILES) {
         if (bucket === 'contradictions') continue;
         for (const e of loaded.canon[bucket] || []) {
@@ -767,6 +1036,159 @@ export function apply(ctx, config = {}) {
       out.beat = { available: false, reason: 'read-failed' };
     }
     return out;
+  }
+
+  /**
+   * 人物形象面板动作（0.4.0）。读操作不写命令/会话；写操作必须显式 confirm:true。
+   * action: status | search_works | list_characters | match | web_search | set | remove
+   */
+  async function avatarAction(request = {}) {
+    const c = ctxOf(request);
+    const action = String(request.action || 'status');
+    if (action === 'status') {
+      const data = await loadAvatars(c.root, c.project);
+      return { ok: true, project: c.project, summary: avatarSummary(data), works: data.works };
+    }
+    if (action === 'search_works') {
+      const result = await searchWorks(String(request.query || ''));
+      return result;
+    }
+    if (action === 'list_characters') {
+      const source = String(request.source || '');
+      const sourceId = String(request.sourceId || '');
+      if (!source || !sourceId) throw new Error('source 和 sourceId 必填');
+      const characters = await listCharacters(source, sourceId);
+      return { ok: true, source, sourceId, characters };
+    }
+    if (action === 'web_search') {
+      return await searchWebImages(String(request.query || ''), {
+        engine: request.engine === 'bing' ? 'bing' : 'baidu',
+        limit: Number(request.limit) || 12,
+      });
+    }
+    if (action === 'fetch_image') {
+      return await fetchImageBase64(String(request.url || ''), {
+        timeoutMs: Number(request.timeoutMs) || undefined,
+      });
+    }
+    if (action === 'match') {
+      const source = String(request.source || '');
+      const sourceId = String(request.sourceId || '');
+      const { canon } = await loadProject(c.root, c.project);
+      const canonCharacters = (canon.characters || []).map((row) => ({
+        id: row.id, name: row.name, aliases: Array.isArray(row.aliases) ? row.aliases : [],
+      }));
+      const sourceCharacters = Array.isArray(request.characters)
+        ? request.characters
+        : (source && sourceId ? await listCharacters(source, sourceId) : []);
+      return { ok: true, matches: matchCharacters(canonCharacters, sourceCharacters) };
+    }
+    if (action === 'set') {
+      if (request.confirm !== true) throw new Error('人物形象写入需要作者确认（confirm:true）');
+      const result = await setAvatar(c.root, c.project, {
+        characterId: String(request.characterId || ''),
+        name: request.name,
+        dataBase64: request.dataBase64,
+        buffer: request.buffer,
+        source: request.source,
+        crop: request.crop,
+      });
+      return result;
+    }
+    if (action === 'remove') {
+      if (request.confirm !== true) throw new Error('删除人物形象需要作者确认（confirm:true）');
+      return await removeAvatar(c.root, c.project, String(request.characterId || ''));
+    }
+    throw new Error(`未知的人物形象动作：${action}`);
+  }
+
+  /**
+   * 导入分析（0.4.2）：只读 canon，返回 Markdown；不写盘。
+   */
+  async function analysisReport(request = {}) {
+    const c = ctxOf(request);
+    const action = String(request.action || 'overview');
+    const loaded = await loadProject(c.root, c.project);
+    const chapters = (loaded.index?.chapters || []).map((ch) => ({
+      id: ch.id, title: ch.title || '', chars: ch.chars || 0, ordinal: ch.ordinal,
+    }));
+    const canon = confirmedCanon(loaded.canon);
+    const book = buildBook({ canon, project: loaded.project, chapters, texts: {}, full: true });
+    const deltas = await loadDeltas(deltaFile(paths(c.root, c.project).dir));
+    return {
+      ok: true,
+      action,
+      project: c.project,
+      revision: Number.isInteger(loaded.project.revision) ? loaded.project.revision : null,
+      text: analyzeBook(book, canon, deltas, action),
+    };
+  }
+
+  /**
+   * 媒体来源 UI 动作（0.4.1）：读只走 remote，不写命令事件；写操作要求显式 confirm。
+   * action: list | verify | add_comic | add_hongguo | remove | comic_pages | comic_panels | comic_ocr | hongguo_search | hongguo_episodes | hongguo_danmaku | add_evidence
+   */
+  async function mediaAction(request = {}) {
+    const c = ctxOf(request);
+    const action = String(request.action || 'list');
+    if (action === 'list') return await listMedia(c.root, c.project);
+    if (action === 'verify') return await verifyMediaEvidence(c.root, c.project);
+    if (action === 'add_comic') {
+      if (request.confirm !== true) throw new Error('登记漫画来源需要作者确认（confirm:true）');
+      return await addComicSource(c.root, c.project, { file: path.resolve(c.root, String(request.file || '')), title: request.title });
+    }
+    if (action === 'add_hongguo') {
+      if (request.confirm !== true) throw new Error('登记红果来源需要作者确认（confirm:true）');
+      return await addHongguoSource(c.root, c.project, {
+        seriesId: request.seriesId, title: request.title, coverUrl: request.coverUrl,
+      });
+    }
+    if (action === 'remove') {
+      if (request.confirm !== true) throw new Error('删除媒体来源需要作者确认（confirm:true）');
+      return await removeMediaSource(c.root, c.project, String(request.sourceId || ''));
+    }
+    if (action === 'add_evidence') {
+      if (request.confirm !== true) throw new Error('登记媒体证据需要作者确认（confirm:true）');
+      return await addMediaEvidence(c.root, c.project, {
+        sourceId: request.sourceId, kind: request.kind, locator: request.locator,
+        quote: request.quote, method: request.method, hash: request.hash,
+      });
+    }
+    if (action === 'hongguo_search') {
+      return await hongguoSearch(String(request.query || ''), {
+        pageSize: Number(request.pageSize) || 20, cursor: request.cursor || undefined,
+      });
+    }
+    if (['comic_pages', 'comic_panels', 'comic_ocr', 'comic_page_image', 'hongguo_episodes', 'hongguo_danmaku'].includes(action)) {
+      const media = await listMedia(c.root, c.project);
+      const source = media.sources.find((row) => row.id === request.sourceId);
+      if (!source) throw new Error(`媒体来源不存在：${request.sourceId}`);
+      if (action === 'comic_pages') return await listComicPages(source.file);
+      if (action === 'comic_panels') return await detectComicPanels(source.file, Number(request.page) || 0);
+      if (action === 'comic_ocr') {
+        if (request.split) {
+          return await ocrComicPanels(source.file, Number(Array.isArray(request.pages) ? (request.pages[0] ?? 0) : 0));
+        }
+        return await ocrComicPages(source.file, Array.isArray(request.pages) ? request.pages : [0]);
+      }
+      if (action === 'comic_page_image') {
+        const pageIndex = Number(request.page) || 0;
+        const pageMeta = (source.pages || []).find((page) => page.index === pageIndex);
+        const bytes = await extractComicPage(source.file, pageIndex);
+        if (bytes.length > 6 * 1024 * 1024) throw new Error('单页超过 6MB，UI 不内嵌显示');
+        const name = String(pageMeta?.name || '').toLowerCase();
+        const mime = name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+        return {
+          ok: true, page: pageIndex, name: pageMeta?.name || '', mime,
+          dataUrl: `data:${mime};base64,${bytes.toString('base64')}`,
+        };
+      }
+      if (action === 'hongguo_episodes') {
+        return await hongguoEpisodes(source.seriesId, { pageSize: Number(request.pageSize) || 20 });
+      }
+      return await hongguoDanmaku(source.seriesId, String(request.episodeId || ''), { pageSize: Number(request.pageSize) || 20 });
+    }
+    throw new Error(`未知的媒体动作：${action}`);
   }
 
   /**
@@ -1612,6 +2034,20 @@ export function apply(ctx, config = {}) {
           attachments: [],
           signal: new AbortController().signal,
         });
+      },
+      async getAvatar(agent, request = {}) {
+        const c = ctxOf(request);
+        if (!request.characterId) throw new Error('characterId 必填');
+        return await resolveAvatar(c.root, c.project, String(request.characterId));
+      },
+      async avatar(agent, request = {}) {
+        return await avatarAction(request);
+      },
+      async media(agent, request = {}) {
+        return await mediaAction(request);
+      },
+      async analysis(agent, request = {}) {
+        return await analysisReport(request);
       },
     };
     if (typeof ctx.effect === 'function') {

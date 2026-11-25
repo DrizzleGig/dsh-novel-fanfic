@@ -1,4 +1,4 @@
-﻿// 插件入口的单元测试：用假的 ctx 捕获注册，验证 5 个 fic_* 工具、/fic 开关语义与工具输出。
+// 插件入口的单元测试：用假的 ctx 捕获注册，验证 8 个 fic_* 工具、/fic 开关语义与工具输出。
 // 不启动 DSH 宿主；宿主侧的安装与启用另见 dev 脚手架的验收文档。
 
 import { test } from 'node:test';
@@ -43,14 +43,14 @@ function harness(overrides = {}) {
 
 const byName = (tools) => Object.fromEntries(tools.map(({ definition }) => [definition.name, definition]));
 
-test('插件导出 name / inject，注册 6 个 fic 工具和 /fic 命令', () => {
+test('插件导出 name / inject，注册 8 个 fic 工具和 /fic 命令', () => {
   assert.equal(name, 'novel-fanfic');
   assert.deepEqual(inject, ['tools', 'commands']);
   const { tools, commands } = harness();
   assert.deepEqual(
     tools.map(({ definition }) => definition.name).sort(),
-    // v0.2.0 起多了 fic_plan（章节任务卡）
-    ['fic_check', 'fic_contract', 'fic_lookup', 'fic_plan', 'fic_source', 'fic_state'],
+    // v0.2.0 起多了 fic_plan；0.4.0 起多了 fic_avatar；0.4.2 起多了 fic_analyze
+    ['fic_analyze', 'fic_avatar', 'fic_check', 'fic_contract', 'fic_lookup', 'fic_plan', 'fic_source', 'fic_state'],
   );
   assert.equal(commands.length, 1);
   assert.equal(commands[0].name, 'fic');

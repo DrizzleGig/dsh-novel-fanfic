@@ -39,6 +39,7 @@ window.__ModuleLoader__.load({
     const PANEL_METHODS = [
       'identity', 'getPanel', 'listProjects', 'getChapter', 'getContract', 'getPlan',
       'search', 'previewImport', 'listImportFiles', 'checkDraft', 'pickDirectory', 'getDeltas',
+      'getAvatar', 'avatar', 'media', 'analysis',
     ];
     const TYPERT_REMOTE = {
       package: 'dsh-novel-fanfic',
@@ -132,12 +133,12 @@ window.__ModuleLoader__.load({
       '.fic-btn.ghost{background:transparent;border-color:transparent;color:var(--fic-ink3);}',
       '.fic-btn.small{height:25px;padding:0 9px;font-size:11.5px;}',
       '.fic-btn:disabled{opacity:.5;cursor:default;}',
-      '.fic-tabs{display:flex;gap:2px;padding:9px 14px 0;flex:none;border-bottom:1px solid var(--fic-line);}',
-      '.fic-tab{flex:1;height:33px;border:0;background:transparent;color:var(--fic-ink2);font-family:inherit;font-size:12.5px;',
-      'cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;border-bottom:2px solid transparent;padding:0;}',
+      '.fic-tabs{display:flex;gap:0;padding:8px 10px 0;flex:none;border-bottom:1px solid var(--fic-line);overflow:hidden;}',
+      '.fic-tab{flex:1;min-width:0;height:34px;border:0;background:transparent;color:var(--fic-ink2);font-family:inherit;font-size:11.5px;',
+      'cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:3px;border-bottom:2px solid transparent;padding:0;white-space:nowrap;}',
       '.fic-tab:hover{color:var(--fic-ink);}',
-      '.fic-tab[aria-selected="true"]{color:var(--fic-brand);font-weight:600;border-bottom-color:var(--fic-brand);}',
-      '.fic-tab .n{font-family:Cascadia Mono,Consolas,monospace;font-size:10px;color:var(--fic-ink3);font-weight:400;}',
+      '.fic-tab[aria-selected="true"]{color:var(--fic-brand);font-weight:600;border-bottom-color:var(--fic-brand);background:color-mix(in srgb,var(--fic-brand) 6%,transparent);}',
+      '.fic-tab .n{font-family:Cascadia Mono,Consolas,monospace;font-size:9px;color:var(--fic-ink3);font-weight:400;opacity:.85;}',
       '.fic-chips{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 2px;scrollbar-width:none;flex:none;}',
       '.fic-chips::-webkit-scrollbar{display:none;}',
       '.fic-chip{flex:none;height:26px;padding:0 10px;border-radius:99px;border:1px solid var(--fic-line2);background:var(--fic-surface);',
@@ -150,14 +151,19 @@ window.__ModuleLoader__.load({
       'border:1px solid var(--fic-line2);background:var(--fic-surface);color:var(--fic-ink2);font-family:inherit;font-size:11.5px;cursor:pointer;}',
       '.fic-pill.count{color:var(--fic-warn);font-weight:600;border-color:color-mix(in srgb,var(--fic-warn) 34%,var(--fic-line2));',
       'background:color-mix(in srgb,var(--fic-warn) 12%,var(--fic-surface));}',
-      '.fic-sect{margin:14px 0 0;}',
+      '.fic-sect{margin:16px 0 0;}',
       '.fic-sect:first-child{margin-top:0;}',
-      '.fic-sect-head{display:flex;align-items:baseline;gap:6px;margin-bottom:7px;}',
-      '.fic-sect-title{font-size:12px;font-weight:600;color:var(--fic-ink2);letter-spacing:.02em;}',
+      '.fic-sect-head{display:flex;align-items:baseline;gap:6px;margin-bottom:8px;}',
+      '.fic-sect-title{font-size:12.5px;font-weight:600;color:var(--fic-ink2);letter-spacing:.02em;}',
       '.fic-sect-meta{margin-left:auto;font-family:Cascadia Mono,Consolas,monospace;font-size:10px;color:var(--fic-ink3);}',
-      '.fic-card{background:var(--fic-surface);border:1px solid var(--fic-line);border-radius:12px;padding:11px 12px;}',
+      '.fic-card{background:var(--fic-surface);border:1px solid var(--fic-line);border-radius:14px;padding:12px 13px;box-shadow:0 1px 2px rgba(20,24,35,.035);transition:border-color .15s ease,box-shadow .15s ease;}',
+      '.fic-card:hover{border-color:var(--fic-line2);box-shadow:0 2px 8px rgba(20,24,35,.055);}',
       '.fic-card+.fic-card{margin-top:8px;}',
-      '.fic-card.flat{background:var(--fic-surface2);border-color:transparent;}',
+      '.fic-card.flat{background:var(--fic-surface2);border-color:transparent;box-shadow:none;}',
+      '.fic-media-page{padding-bottom:96px;}',
+      '.fic-media-page input:focus{border-color:var(--fic-brand)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--fic-brand) 14%,transparent);}',
+      '.fic-media-card{background:var(--fic-surface);border:1px solid var(--fic-line);border-radius:12px;padding:9px 10px;margin-bottom:8px;box-shadow:0 1px 2px rgba(20,24,35,.03);}',
+      '.fic-media-card:hover{border-color:var(--fic-line2);}',
       '.fic-mission{background:var(--fic-surface);border:1px solid color-mix(in srgb,var(--fic-brand) 30%,var(--fic-line));',
       'border-radius:12px;overflow:hidden;}',
       '.fic-mission-head{padding:9px 12px;display:flex;align-items:center;gap:7px;',
@@ -440,6 +446,111 @@ window.__ModuleLoader__.load({
       );
     }
 
+    /**
+     * 人物形象头像（0.4.0）：已确认的图由 getAvatar 懒加载成 Blob URL；
+     * 未确认/加载失败回退到现有字母色块。不在首屏请求全部 60 人：
+     * 有 IntersectionObserver 时卡片进入视口才取。
+     */
+    function CharacterAvatar(props) {
+      const name = String(props.name || '?');
+      const size = Number(props.size) || 36;
+      const role = props.role || '';
+      const info = props.avatarInfo || null;
+      const face = props.face;
+      const project = props.project;
+      const [src, setSrc] = React.useState(null);
+      const [failed, setFailed] = React.useState(false);
+      const nodeRef = React.useRef(null);
+      const hash = info && info.status === 'confirmed' ? String(info.hash || '') : '';
+
+      React.useEffect(function () {
+        let alive = true;
+        let url = null;
+        let observer = null;
+        setSrc(null);
+        setFailed(false);
+        if (!hash || !face || typeof face.getAvatar !== 'function' || !props.characterId) return function () {};
+        const load = function () {
+          Promise.resolve(face.getAvatar(props.characterId, project || undefined))
+            .then(function (result) {
+              if (!alive || !result || !result.ok || !result.base64) {
+                if (alive) setFailed(true);
+                return;
+              }
+              const binary = atob(result.base64);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              url = URL.createObjectURL(new Blob([bytes], { type: result.mime || 'image/webp' }));
+              if (alive) setSrc(url);
+            })
+            .catch(function () { if (alive) setFailed(true); });
+        };
+        if (typeof IntersectionObserver === 'function' && nodeRef.current) {
+          observer = new IntersectionObserver(function (entries) {
+            if (entries.some(function (entry) { return entry.isIntersecting; })) {
+              observer.disconnect();
+              observer = null;
+              load();
+            }
+          }, { rootMargin: '120px' });
+          observer.observe(nodeRef.current);
+        } else {
+          load();
+        }
+        return function () {
+          alive = false;
+          if (observer) observer.disconnect();
+          if (url) URL.revokeObjectURL(url);
+        };
+      }, [hash, face, project, props.characterId]);
+
+      const art = artStyle(name, size);
+      const showImage = src && !failed;
+      const dot = info && info.status === 'confirmed' ? c.success : info && info.status === 'candidate' ? c.warn : c.faint;
+      return h(
+        'div',
+        {
+          ref: nodeRef,
+          style: {
+            width: size,
+            height: size,
+            borderRadius: size > 44 ? 14 : size > 26 ? 10 : 7,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            position: 'relative',
+            overflow: 'hidden',
+            color: art.color,
+            textShadow: art.textShadow,
+            fontSize: size > 44 ? 24 : size > 26 ? 15 : 10.5,
+            fontWeight: 700,
+            backgroundImage: showImage ? 'none' : art.backgroundImage,
+            backgroundSize: art.backgroundSize,
+            border: '1px solid rgba(255,255,255,.24)',
+            boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.06)',
+          },
+          title: role ? role + ' · ' + name : name,
+        },
+        showImage
+          ? h('img', {
+              src: src,
+              alt: name + ' 的形象',
+              onError: function () { setFailed(true); },
+              style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
+            })
+          : name.slice(0, 1),
+        props.showDot
+          ? h('span', {
+              style: {
+                position: 'absolute', right: 2, bottom: 2, width: 8, height: 8, borderRadius: '50%',
+                background: dot, border: '1.5px solid ' + c.base,
+              },
+            })
+          : null,
+      );
+    }
+
     function bar(value, total, tone) {
       const ratio = total > 0 ? Math.max(0, Math.min(1, value / total)) : 0;
       return h(
@@ -587,6 +698,948 @@ window.__ModuleLoader__.load({
             item.label + (item.count !== undefined ? ' ' + item.count : ''),
           ),
         ),
+      );
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function () { resolve(String(reader.result || '')); };
+        reader.onerror = function () { reject(new Error('读取文件失败')); };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function squareImageDataUrl(dataUrl) {
+      return new Promise(function (resolve, reject) {
+        const image = new Image();
+        image.onload = function () {
+          try {
+            const side = Math.min(image.width, image.height);
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            canvas.getContext('2d').drawImage(
+              image,
+              (image.width - side) / 2,
+              (image.height - side) / 2,
+              side,
+              side,
+              0,
+              0,
+              256,
+              256,
+            );
+            resolve(canvas.toDataURL('image/webp', 0.86));
+          } catch (error) {
+            reject(error);
+          }
+        };
+        image.onerror = function () { reject(new Error('图片无法解码')); };
+        image.src = dataUrl;
+      });
+    }
+
+    /**
+     * 人物形象 sheet（0.4.0 首版）：网页搜图（内嵌 Bing/百度）+ 上传 + 删除。
+     * 官方匹配先通过 fic_avatar 工具/remote；UI 后续补作品/角色选择器。
+     */
+    function AvatarSheet(props) {
+      const ch = props.character;
+      const face = props.face;
+      const project = props.project;
+      const [tab, setTab] = React.useState('web');
+      const [query, setQuery] = React.useState((ch.name || '') + ' 动画 形象');
+      const [engine, setEngine] = React.useState('baidu');
+      const [results, setResults] = React.useState([]);
+      const [selected, setSelected] = React.useState(null);
+      const [officialQuery, setOfficialQuery] = React.useState((props.projectTitle || ch.name || '') + ' ' + ch.name);
+      const [works, setWorks] = React.useState([]);
+      const [chosenWork, setChosenWork] = React.useState(null);
+      const [officialCharacters, setOfficialCharacters] = React.useState([]);
+      const [officialMatches, setOfficialMatches] = React.useState([]);
+      const [selectedOfficial, setSelectedOfficial] = React.useState(null);
+      const [busy, setBusy] = React.useState('');
+      const [message, setMessage] = React.useState('');
+      const [error, setError] = React.useState('');
+      const fileRef = React.useRef(null);
+
+      const run = async function (label, fn) {
+        setBusy(label);
+        setError('');
+        try {
+          const value = await fn();
+          return value;
+        } catch (err) {
+          setError(String((err && err.message) || err));
+          return null;
+        } finally {
+          setBusy('');
+        }
+      };
+
+      const search = function () {
+        return run('搜索', async function () {
+          const result = await face.avatar({ action: 'web_search', query: query, engine: engine }, project);
+          setResults(Array.isArray(result.images) ? result.images : []);
+          setSelected(null);
+          if (!result.ok) setError(result.error || '没有找到结果');
+          return result;
+        });
+      };
+
+      const searchOfficial = function () {
+        return run('官方搜索', async function () {
+          const result = await face.avatar({ action: 'search_works', query: officialQuery }, project);
+          setWorks(Array.isArray(result.works) ? result.works : []);
+          setChosenWork(null);
+          setOfficialCharacters([]);
+          setOfficialMatches([]);
+          setSelectedOfficial(null);
+          if (!result.ok) setError('官方来源没有找到作品；可换关键词或切网页搜图。');
+          return result;
+        });
+      };
+
+      const pickWork = function (work) {
+        return run('读角色', async function () {
+          const listed = await face.avatar({
+            action: 'list_characters', source: work.source, sourceId: work.sourceId,
+          }, project);
+          const characters = Array.isArray(listed.characters) ? listed.characters : [];
+          const matched = await face.avatar({
+            action: 'match', source: work.source, sourceId: work.sourceId, characters: characters,
+          }, project);
+          const mine = (matched.matches || []).find(function (row) { return row.characterId === ch.id; });
+          setChosenWork(work);
+          setOfficialCharacters(characters);
+          setOfficialMatches(mine && mine.candidates ? mine.candidates : []);
+          setSelectedOfficial(null);
+          return true;
+        });
+      };
+
+      const useOfficial = function () {
+        if (!selectedOfficial) return;
+        return run('保存', async function () {
+          const fetched = await face.avatar({
+            action: 'fetch_image',
+            url: selectedOfficial.imageUrl || selectedOfficial.thumbUrl,
+          }, project);
+          if (!fetched || !fetched.ok) throw new Error(fetched?.error || '图片下载失败');
+          const square = await squareImageDataUrl('data:' + (fetched.mime || 'image/webp') + ';base64,' + fetched.base64);
+          await face.avatar({
+            action: 'set',
+            characterId: ch.id,
+            name: ch.name,
+            dataBase64: square,
+            source: {
+              kind: selectedOfficial.source || 'bangumi',
+              workSourceId: chosenWork ? chosenWork.sourceId : '',
+              characterSourceId: selectedOfficial.sourceId || '',
+              pageUrl: selectedOfficial.pageUrl || '',
+              imageUrl: selectedOfficial.imageUrl || '',
+              credit: (chosenWork ? chosenWork.title : '') + ' · ' + (selectedOfficial.name || ''),
+            },
+            confirm: true,
+          }, project);
+          setMessage('已保存到本地；只作创作参考。');
+          if (props.onChanged) await props.onChanged();
+          return true;
+        });
+      };
+
+      const useSelected = function () {
+        if (!selected) return;
+        return run('保存', async function () {
+          const fetched = await face.avatar({
+            action: 'fetch_image',
+            url: selected.thumbUrl || selected.imageUrl,
+          }, project);
+          if (!fetched || !fetched.ok) throw new Error(fetched?.error || '图片下载失败');
+          const square = await squareImageDataUrl('data:' + (fetched.mime || 'image/webp') + ';base64,' + fetched.base64);
+          await face.avatar({
+            action: 'set',
+            characterId: ch.id,
+            name: ch.name,
+            dataBase64: square,
+            source: {
+              kind: selected.source || 'web-image',
+              pageUrl: selected.pageUrl || '',
+              imageUrl: selected.imageUrl || '',
+              query: query,
+              credit: selected.title || selected.source || '网页搜图',
+            },
+            confirm: true,
+          }, project);
+          setMessage('已保存到本地；只作创作参考。');
+          if (props.onChanged) await props.onChanged();
+          return true;
+        });
+      };
+
+      const upload = function (file) {
+        if (!file) return;
+        return run('上传', async function () {
+          const raw = await readFileAsDataUrl(file);
+          const square = await squareImageDataUrl(raw);
+          await face.avatar({
+            action: 'set',
+            characterId: ch.id,
+            name: ch.name,
+            dataBase64: square,
+            source: { kind: 'upload', credit: '作者上传' },
+            confirm: true,
+          }, project);
+          setMessage('已保存到本地；只作创作参考。');
+          if (props.onChanged) await props.onChanged();
+          return true;
+        });
+      };
+
+      const remove = function () {
+        if (!window.confirm('删除本地形象？不会删除人物资料。')) return;
+        return run('删除', async function () {
+          await face.avatar({ action: 'remove', characterId: ch.id, confirm: true }, project);
+          setMessage('已删除本地形象。');
+          if (props.onChanged) await props.onChanged();
+          return true;
+        });
+      };
+
+      const tabButton = function (key, label) {
+        return h('button', {
+          type: 'button',
+          onClick: function () { setTab(key); },
+          style: {
+            flex: 1, appearance: 'none', border: 'none', borderRadius: 7, padding: '5px 0',
+            background: tab === key ? c.layer : 'transparent', color: tab === key ? c.text : c.sub,
+            fontFamily: 'inherit', fontSize: 11.5, fontWeight: tab === key ? 600 : 400, cursor: 'pointer',
+          },
+        }, label);
+      };
+
+      return h(
+        Sheet,
+        { title: h('div', null,
+          h('div', { style: { color: c.text, fontSize: 14, fontWeight: 600 } }, '形象 · ' + ch.name),
+          h('div', { style: { color: c.faint, fontSize: 10, marginTop: 2 } }, '只作本地创作参考；确认后显示在人物卡')),
+          onClose: props.onClose },
+        h('div', { style: { display: 'flex', gap: 10, alignItems: 'center' } },
+          h(CharacterAvatar, {
+            name: ch.name, size: 64, role: ch.role, characterId: ch.id,
+            avatarInfo: ch.avatar, face: face, project: project, showDot: true,
+          }),
+          h('div', { style: { minWidth: 0, flex: 1 } },
+            h('div', { style: { fontSize: 12.5, fontWeight: 600 } }, ch.name),
+            h('div', { style: { color: c.faint, fontSize: 10, marginTop: 3, lineHeight: 1.5 } },
+              ch.avatar && ch.avatar.status === 'confirmed'
+                ? '已确认 · ' + (ch.avatar.sourceKind || 'upload')
+                : '还没有确认形象；字母回退可用。'),
+            h('div', { style: { display: 'flex', gap: 6, marginTop: 6 } },
+              h('button', { type: 'button', className: 'fic-link', onClick: function () { if (fileRef.current) fileRef.current.click(); } }, '上传图片'),
+              ch.avatar && ch.avatar.status === 'confirmed'
+                ? h('button', { type: 'button', className: 'fic-link', onClick: remove, style: { color: c.error } }, '删除本地形象')
+                : null,
+            ),
+          ),
+        ),
+        h('input', {
+          ref: fileRef, type: 'file', accept: 'image/png,image/jpeg,image/webp',
+          style: { display: 'none' },
+          onChange: function (event) { upload(event.target.files && event.target.files[0]); event.target.value = ''; },
+        }),
+        h('div', { style: { display: 'flex', gap: 2, background: c.layer2, borderRadius: 9, padding: 3, marginTop: 12 } },
+          tabButton('web', '网页搜图'),
+          tabButton('official', '官方匹配'),
+          tabButton('upload', '上传'),
+        ),
+        tab === 'web' ? h('div', null,
+          h('div', { style: { display: 'flex', gap: 6, marginTop: 10 } },
+            h('input', {
+              type: 'text', value: query,
+              onChange: function (event) { setQuery(event.target.value); },
+              style: {
+                flex: 1, minWidth: 0, border: '1px solid ' + c.border, background: c.layer2, color: c.text,
+                borderRadius: 7, padding: '6px 8px', fontSize: 11.5, fontFamily: 'inherit', outline: 'none',
+              },
+            }),
+            h('select', {
+              value: engine, onChange: function (event) { setEngine(event.target.value); },
+              style: { border: '1px solid ' + c.border, background: c.layer2, color: c.sub, borderRadius: 7, padding: '0 5px', fontSize: 11, fontFamily: 'inherit' },
+            }, h('option', { value: 'baidu' }, '百度'), h('option', { value: 'bing' }, 'Bing')),
+            h('button', {
+              type: 'button', disabled: !!busy, onClick: search,
+              style: { border: 'none', background: c.brand, color: c.onBrand, borderRadius: 7, padding: '0 10px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' },
+            }, busy === '搜索' ? '搜索…' : '搜'),
+          ),
+          results.length
+            ? h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 7, marginTop: 9 } },
+                results.map(function (row, index) {
+                  const on = selected && selected.imageUrl === row.imageUrl;
+                  return h('button', {
+                    key: 'img' + index, type: 'button',
+                    onClick: function () { setSelected(row); },
+                    style: {
+                      appearance: 'none', border: '1px solid ' + (on ? c.brand : c.border),
+                      boxShadow: on ? '0 0 0 2px ' + c.layer2 : 'none', background: c.layer2, borderRadius: 8,
+                      padding: 3, cursor: 'pointer', overflow: 'hidden', textAlign: 'left', fontFamily: 'inherit',
+                    },
+                  },
+                    h('img', {
+                      src: row.thumbUrl || row.imageUrl, alt: row.title || ch.name,
+                      style: { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 5, display: 'block' },
+                    }),
+                    h('div', { style: { color: c.faint, fontSize: 8.5, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } },
+                      (row.source || 'web') + (row.title ? ' · ' + row.title : '')),
+                  );
+                }))
+            : h('div', { style: { color: c.faint, fontSize: 11, lineHeight: 1.6, marginTop: 10 } },
+                '内嵌解析百度 / Bing 结果，不装插件；点「搜」才开始请求。Bing 缩略图不可达时切百度或上传。'),
+          h('div', { style: { display: 'flex', gap: 6, marginTop: 10 } },
+            h('button', {
+              type: 'button', disabled: !selected || !!busy, onClick: useSelected,
+              style: { flex: 1, border: 'none', background: selected ? c.brand : c.layer2, color: selected ? c.onBrand : c.faint, borderRadius: 7, padding: '7px 0', fontSize: 11.5, fontWeight: 600 },
+            }, busy === '保存' ? '保存…' : '使用这张'),
+            h('button', {
+              type: 'button', onClick: function () { window.open('https://www.bing.com/images/search?q=' + encodeURIComponent(query), '_blank', 'noopener'); },
+              style: { border: '1px solid ' + c.border, background: c.transparent || 'transparent', color: c.sub, borderRadius: 7, padding: '0 9px', fontSize: 10.5 },
+            }, '浏览器打开'),
+          ),
+        ) : tab === 'official' ? h('div', null,
+          h('div', { style: { display: 'flex', gap: 6, marginTop: 10 } },
+            h('input', {
+              type: 'text', value: officialQuery,
+              onChange: function (event) { setOfficialQuery(event.target.value); },
+              style: {
+                flex: 1, minWidth: 0, border: '1px solid ' + c.border, background: c.layer2, color: c.text,
+                borderRadius: 7, padding: '6px 8px', fontSize: 11.5, fontFamily: 'inherit', outline: 'none',
+              },
+            }),
+            h('button', {
+              type: 'button', disabled: !!busy, onClick: searchOfficial,
+              style: { border: 'none', background: c.brand, color: c.onBrand, borderRadius: 7, padding: '0 10px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' },
+            }, busy === '官方搜索' ? '查…' : '查'),
+          ),
+          !works.length && !chosenWork
+            ? h('div', { style: { color: c.faint, fontSize: 11, lineHeight: 1.6, marginTop: 10 } },
+                'Bangumi / AniList / Kitsu 三源查作品；选作品后按角色名/别名匹配。')
+            : null,
+          works.length && !chosenWork
+            ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 5, marginTop: 8 } },
+                works.slice(0, 6).map(function (work, index) {
+                  return h('button', {
+                    key: 'work' + index, type: 'button', onClick: function () { pickWork(work); },
+                    style: {
+                      display: 'flex', gap: 7, alignItems: 'center', width: '100%', textAlign: 'left',
+                      border: '1px solid ' + c.border, background: c.layer2, color: c.text,
+                      borderRadius: 8, padding: '6px 7px', cursor: 'pointer', fontFamily: 'inherit',
+                    },
+                  },
+                    work.coverUrl
+                      ? h('img', { src: work.coverUrl, alt: '', style: { width: 24, height: 32, objectFit: 'cover', borderRadius: 4, flexShrink: 0 } })
+                      : h('span', { style: { width: 24, height: 32, borderRadius: 4, background: c.layer3, flexShrink: 0 } }),
+                    h('span', { style: { minWidth: 0, flex: 1 } },
+                      h('span', { style: { display: 'block', fontSize: 11.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, work.title),
+                      h('span', { style: { display: 'block', color: c.faint, fontSize: 9, marginTop: 1 } },
+                        work.source + ' · ' + (work.type || '') + (work.year ? ' · ' + work.year : '')),
+                    ),
+                    h('span', { style: { color: c.faint, fontSize: 11 } }, '›'),
+                  );
+                }))
+            : null,
+          chosenWork
+            ? h('div', { style: { marginTop: 9 } },
+                h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, color: c.faint, fontSize: 10 } },
+                  h('span', { style: { minWidth: 0, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } },
+                    '已选：' + chosenWork.title + ' · ' + chosenWork.source),
+                  h('button', {
+                    type: 'button', className: 'fic-link',
+                    onClick: function () { setChosenWork(null); setOfficialMatches([]); setOfficialCharacters([]); setSelectedOfficial(null); },
+                  }, '换作品'),
+                ),
+                (officialMatches.length ? officialMatches : officialCharacters).length
+                  ? h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 7, marginTop: 8 } },
+                      (officialMatches.length ? officialMatches : officialCharacters).slice(0, 9).map(function (candidate, index) {
+                        const on = selectedOfficial && selectedOfficial.sourceId === candidate.sourceId && selectedOfficial.imageUrl === candidate.imageUrl;
+                        return h('button', {
+                          key: 'official' + index, type: 'button', onClick: function () { setSelectedOfficial(candidate); },
+                          style: {
+                            appearance: 'none', border: '1px solid ' + (on ? c.brand : c.border),
+                            boxShadow: on ? '0 0 0 2px ' + c.layer2 : 'none', background: c.layer2,
+                            borderRadius: 8, padding: 3, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                          },
+                        },
+                          h('img', {
+                            src: candidate.thumbUrl || candidate.imageUrl, alt: candidate.name || ch.name,
+                            style: { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 5, display: 'block' },
+                          }),
+                          h('div', { style: { fontSize: 9.5, fontWeight: 600, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, candidate.name),
+                          h('div', { style: { color: c.faint, fontSize: 8.5, marginTop: 1 } },
+                            candidate.confidence ? candidate.confidence + ' · ' + candidate.source : (candidate.source || chosenWork.source)),
+                        );
+                      }))
+                  : h('div', { style: { color: c.faint, fontSize: 10.5, lineHeight: 1.6, marginTop: 8 } },
+                      '没有匹配到同名角色；可换作品，或切网页搜图/上传。'),
+                h('button', {
+                  type: 'button', disabled: !selectedOfficial || !!busy, onClick: useOfficial,
+                  style: { width: '100%', marginTop: 8, border: 'none', background: selectedOfficial ? c.brand : c.layer2, color: selectedOfficial ? c.onBrand : c.faint, borderRadius: 7, padding: '7px 0', fontSize: 11.5, fontWeight: 600 },
+                }, busy === '保存' ? '保存…' : '使用这张'),
+              )
+            : null,
+        ) : h('div', { style: { marginTop: 10 } },
+          h('div', { style: { color: c.faint, fontSize: 10.5, lineHeight: 1.6 } },
+            '选一张你有权使用的图；居中裁成 256×256 WebP。只存本地，不改 canon。'),
+          h('button', {
+            type: 'button', onClick: function () { if (fileRef.current) fileRef.current.click(); },
+            style: { width: '100%', border: '1px dashed ' + c.border2, background: c.layer2, color: c.text, borderRadius: 8, padding: '18px 0', fontSize: 11.5, cursor: 'pointer', marginTop: 8 },
+          }, '选择本地图片'),
+        ),
+        message ? h('div', { style: { color: c.success, fontSize: 10.5, marginTop: 8 } }, message) : null,
+        error ? h('div', { style: { color: c.error, fontSize: 10.5, marginTop: 8, lineHeight: 1.5 } }, error) : null,
+        h('div', { style: { color: c.faint, fontSize: 9, lineHeight: 1.5, marginTop: 8 } },
+          '来源图版权归各站/原作者；仅本地参考，公开使用请自行取得授权。'),
+      );
+    }
+
+    // 批量配图：一次作品搜索 → 全角色匹配 → 逐项确认。默认不勾选，避免静默全用。
+    function BatchAvatarSheet(props) {
+      const face = props.face;
+      const project = props.project;
+      const characters = Array.isArray(props.characters) ? props.characters : [];
+      const [query, setQuery] = React.useState(props.projectTitle || '');
+      const [works, setWorks] = React.useState([]);
+      const [chosenWork, setChosenWork] = React.useState(null);
+      const [suggestions, setSuggestions] = React.useState([]);
+      const [checked, setChecked] = React.useState({});
+      const [busy, setBusy] = React.useState('');
+      const [message, setMessage] = React.useState('');
+      const [error, setError] = React.useState('');
+
+      const run = async function (label, fn) {
+        setBusy(label);
+        setError('');
+        try { return await fn(); }
+        catch (err) { setError(String((err && err.message) || err)); return null; }
+        finally { setBusy(''); }
+      };
+
+      const search = function () {
+        return run('查作品', async function () {
+          const result = await face.avatar({ action: 'search_works', query: query }, project);
+          setWorks(Array.isArray(result.works) ? result.works : []);
+          setChosenWork(null);
+          setSuggestions([]);
+          setChecked({});
+          if (!result.ok) setError('没有找到作品；换关键词再试。');
+          return result;
+        });
+      };
+
+      const pickWork = function (work) {
+        return run('匹配', async function () {
+          const listed = await face.avatar({ action: 'list_characters', source: work.source, sourceId: work.sourceId }, project);
+          const sourceCharacters = Array.isArray(listed.characters) ? listed.characters : [];
+          const matched = await face.avatar({
+            action: 'match', source: work.source, sourceId: work.sourceId, characters: sourceCharacters,
+          }, project);
+          const byId = new Map(characters.map(function (ch) { return [ch.id, ch]; }));
+          const rows = [];
+          for (const row of matched.matches || []) {
+            const character = byId.get(row.characterId);
+            const candidate = (row.candidates || []).find(function (c) { return c.confidence === 'high'; })
+              || (row.candidates || []).find(function (c) { return c.confidence === 'medium'; })
+              || (row.candidates || [])[0];
+            if (character && candidate) rows.push({ character: character, candidate: candidate });
+          }
+          setChosenWork(work);
+          setSuggestions(rows);
+          setChecked({});
+          if (!rows.length) setError('没有匹配到可用的 high/medium 候选；可到单人物页手动选。');
+          return true;
+        });
+      };
+
+      const selectHigh = function () {
+        const next = {};
+        suggestions.forEach(function (row) {
+          if (row.candidate.confidence === 'high') next[row.character.id] = true;
+        });
+        setChecked(next);
+      };
+
+      const confirmSelected = function () {
+        const selected = suggestions.filter(function (row) { return checked[row.character.id]; });
+        if (!selected.length) { setError('先勾选要确认的人物。'); return; }
+        return run('批量保存', async function () {
+          let done = 0;
+          const failures = [];
+          for (let i = 0; i < selected.length; i++) {
+            const row = selected[i];
+            setBusy('保存 ' + (i + 1) + '/' + selected.length);
+            try {
+              const fetched = await face.avatar({ action: 'fetch_image', url: row.candidate.imageUrl || row.candidate.thumbUrl }, project);
+              if (!fetched || !fetched.ok) throw new Error(fetched?.error || '取图失败');
+              const square = await squareImageDataUrl('data:' + (fetched.mime || 'image/webp') + ';base64,' + fetched.base64);
+              await face.avatar({
+                action: 'set',
+                characterId: row.character.id,
+                name: row.character.name,
+                dataBase64: square,
+                source: {
+                  kind: row.candidate.source || chosenWork.source,
+                  workSourceId: chosenWork.sourceId,
+                  characterSourceId: row.candidate.sourceId,
+                  pageUrl: row.candidate.pageUrl || '',
+                  imageUrl: row.candidate.imageUrl || '',
+                  credit: chosenWork.title + ' · ' + row.candidate.name,
+                },
+                confirm: true,
+              }, project);
+              done += 1;
+            } catch (err) {
+              failures.push(row.character.name + '：' + String((err && err.message) || err));
+            }
+          }
+          setMessage('批量完成：成功 ' + done + '，失败 ' + failures.length + (failures.length ? '；' + failures.slice(0, 3).join('；') : ''));
+          if (props.onChanged) await props.onChanged();
+          return true;
+        });
+      };
+
+      return h(Sheet, { title: '批量配图', onClose: props.onClose },
+        h('div', { style: { color: c.faint, fontSize: 10.5, lineHeight: 1.6 } },
+          '一次搜作品，按姓名/别名匹配全部人物；默认不勾选，只保存你勾选的 high/medium 候选。'),
+        h('div', { style: { display: 'flex', gap: 6, marginTop: 10 } },
+          h('input', {
+            type: 'text', value: query, onChange: function (event) { setQuery(event.target.value); },
+            placeholder: '作品名，如 斗罗大陆',
+            style: { flex: 1, minWidth: 0, border: '1px solid ' + c.border, background: c.layer2, color: c.text, borderRadius: 7, padding: '6px 8px', fontSize: 11.5, fontFamily: 'inherit', outline: 'none' },
+          }),
+          h('button', {
+            type: 'button', disabled: !!busy, onClick: search,
+            style: { border: 'none', background: c.brand, color: c.onBrand, borderRadius: 7, padding: '0 10px', fontSize: 11.5, fontWeight: 600 },
+          }, busy === '查作品' ? '查…' : '查'),
+        ),
+        works.length && !chosenWork ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 5, marginTop: 8 } },
+          works.slice(0, 6).map(function (work, i) {
+            return h('button', {
+              key: 'bw' + i, type: 'button', onClick: function () { pickWork(work); },
+              style: { display: 'flex', gap: 6, alignItems: 'center', width: '100%', textAlign: 'left', border: '1px solid ' + c.border, background: c.layer2, color: c.text, borderRadius: 7, padding: '6px 7px', cursor: 'pointer', fontFamily: 'inherit' },
+            }, h('span', { style: { flex: 1, minWidth: 0, fontSize: 11.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, work.title),
+              h('span', { style: { color: c.faint, fontSize: 9 } }, work.source + (work.year ? ' · ' + work.year : '')));
+          })) : null,
+        chosenWork ? h('div', { style: { marginTop: 9 } },
+          h('div', { style: { color: c.faint, fontSize: 10 } },
+            '已选：' + chosenWork.title + ' · ' + chosenWork.source + ' · 候选 ' + suggestions.length + ' 人'),
+          suggestions.length ? h('div', { style: { maxHeight: 300, overflow: 'auto', marginTop: 7, border: '1px solid ' + c.border, borderRadius: 8 } },
+            suggestions.map(function (row) {
+              const id = row.character.id;
+              return h('label', {
+                key: 'bs' + id,
+                style: { display: 'flex', gap: 7, alignItems: 'center', padding: '6px 8px', borderBottom: '1px solid ' + c.border, cursor: 'pointer' },
+              },
+                h('input', { type: 'checkbox', checked: !!checked[id], onChange: function (event) {
+                  setChecked(function (prev) { const next = Object.assign({}, prev); if (event.target.checked) next[id] = true; else delete next[id]; return next; });
+                } }),
+                h('img', { src: row.candidate.thumbUrl || row.candidate.imageUrl, alt: row.candidate.name, style: { width: 36, height: 36, borderRadius: 7, objectFit: 'cover', flexShrink: 0 } }),
+                h('span', { style: { minWidth: 0, flex: 1 } },
+                  h('span', { style: { display: 'block', fontSize: 11.5, fontWeight: 600 } }, row.character.name + ' → ' + row.candidate.name),
+                  h('span', { style: { display: 'block', color: c.faint, fontSize: 9, marginTop: 1 } }, row.candidate.confidence + ' · ' + row.candidate.source)),
+              );
+            })) : h('div', { style: { color: c.faint, fontSize: 10.5, marginTop: 8 } }, '没有可用候选；换作品或到单人物页手动选。'),
+          suggestions.length ? h('div', { style: { display: 'flex', gap: 6, marginTop: 8 } },
+            h('button', { type: 'button', className: 'fic-link', onClick: selectHigh }, '全选高置信'),
+            h('button', { type: 'button', className: 'fic-link', onClick: function () { setChecked({}); } }, '清空'),
+            h('button', {
+              type: 'button', disabled: !!busy, onClick: confirmSelected,
+              style: { marginLeft: 'auto', border: 'none', background: c.brand, color: c.onBrand, borderRadius: 7, padding: '6px 10px', fontSize: 11.5, fontWeight: 600 },
+            }, busy && busy.indexOf('保存') === 0 ? busy : '确认所选'),
+          ) : null,
+        ) : null,
+        message ? h('div', { style: { color: c.success, fontSize: 10.5, marginTop: 8, lineHeight: 1.5 } }, message) : null,
+        error ? h('div', { style: { color: c.error, fontSize: 10.5, marginTop: 8, lineHeight: 1.5 } }, error) : null,
+        h('div', { style: { color: c.faint, fontSize: 9, lineHeight: 1.5, marginTop: 8 } },
+          '图片只存本地；来源/版权归各站/原作者；不随作品发布。'),
+      );
+    }
+
+    // 媒体来源（0.4.1）：只读列表/分页/分格/OCR；写入必须作者确认。
+    function MediaView(props) {
+      const face = props.face;
+      const project = props.project;
+      const kind = props.kind === 'hongguo' ? 'hongguo' : 'comic';
+      const isComic = kind === 'comic';
+      const [data, setData] = React.useState(null);
+      const [busy, setBusy] = React.useState('');
+      const [error, setError] = React.useState('');
+      const [comicPath, setComicPath] = React.useState('');
+      const [hongQuery, setHongQuery] = React.useState('');
+      const [hongResults, setHongResults] = React.useState([]);
+      const [open, setOpen] = React.useState(null);
+      const loadSeq = React.useRef(0);
+
+      const load = function () {
+        const seq = ++loadSeq.current;
+        return Promise.resolve(face.media({ action: 'list' }, project))
+          .then(function (result) {
+            if (seq !== loadSeq.current) return;
+            setData(result); setError('');
+          })
+          .catch(function (err) {
+            if (seq !== loadSeq.current) return;
+            setError(String((err && err.message) || err));
+          });
+      };
+      React.useEffect(function () { load(); }, [project]);
+      React.useEffect(function () { setOpen(null); setError(''); }, [kind]);
+
+      const run = async function (label, fn) {
+        setBusy(label);
+        setError('');
+        try { return await fn(); }
+        catch (err) { setError(String((err && err.message) || err)); return null; }
+        finally { setBusy(''); }
+      };
+
+      const addComic = function () {
+        if (!comicPath.trim()) return;
+        return run('登记漫画', async function () {
+          await face.media({ action: 'add_comic', file: comicPath.trim(), confirm: true }, project);
+          setComicPath('');
+          await load();
+        });
+      };
+
+      const chooseFolder = function () {
+        return run('选文件夹', async function () {
+          const picked = await face.pickDir();
+          if (picked && picked.ok && picked.path) {
+            setComicPath(picked.path);
+            return;
+          }
+          if (picked && picked.text) setError(picked.text);
+          else if (picked && picked.reason === 'unavailable') setError('当前宿主没有目录选择器，请直接填路径。');
+        });
+      };
+
+      const searchHong = function () {
+        if (!hongQuery.trim()) return;
+        return run('搜红果', async function () {
+          const result = await face.media({ action: 'hongguo_search', query: hongQuery.trim() }, project);
+          setHongResults(Array.isArray(result.items) ? result.items : []);
+          if (!result || !result.items) setError('没有找到红果结果');
+        });
+      };
+
+      const addHong = function (item) {
+        return run('登记红果', async function () {
+          await face.media({
+            action: 'add_hongguo', seriesId: item.id, title: item.title, coverUrl: item.cover_url || '', confirm: true,
+          }, project);
+          await load();
+        });
+      };
+
+      const openComic = function (source) {
+        return run('读页', async function () {
+          const result = await face.media({ action: 'comic_pages', sourceId: source.id }, project);
+          setOpen({ source: source, pages: result.pages || [], page: 0, panels: null, ocr: null });
+        });
+      };
+
+      const openHong = function (source) {
+        return run('读分集', async function () {
+          const result = await face.media({ action: 'hongguo_episodes', sourceId: source.id }, project);
+          setOpen({ source: source, episodes: result.items || [], danmaku: null });
+        });
+      };
+
+      const readDanmaku = function (source, episode) {
+        return run('读弹幕', async function () {
+          const result = await face.media({
+            action: 'hongguo_danmaku', sourceId: source.id, episodeId: episode.id, pageSize: 20,
+          }, project);
+          setOpen(function (prev) { return Object.assign({}, prev, { danmaku: result, episode: episode }); });
+        });
+      };
+
+      const inspectPage = function (source, page) {
+        return run('分格', async function () {
+          const result = await face.media({ action: 'comic_panels', sourceId: source.id, page: page }, project);
+          setOpen(function (prev) { return Object.assign({}, prev, { page: page, panels: result.panels || [], ocr: null }); });
+        });
+      };
+
+      const readPage = function (source, page) {
+        return run('读页', async function () {
+          const results = await Promise.all([
+            face.media({ action: 'comic_page_image', sourceId: source.id, page: page }, project),
+            face.media({ action: 'comic_panels', sourceId: source.id, page: page }, project),
+          ]);
+          setOpen(function (prev) {
+            return Object.assign({}, prev, {
+              page: page, image: results[0].dataUrl || '', panels: results[1].panels || [],
+              pageMeta: results[1].page || null, ocr: null,
+            });
+          });
+        });
+      };
+
+      const ocrPage = function (source, page) {
+        return run('OCR', async function () {
+          const result = await face.media({ action: 'comic_ocr', sourceId: source.id, pages: [page], split: true }, project);
+          setOpen(function (prev) { return Object.assign({}, prev, { page: page, ocr: result }); });
+        });
+      };
+
+      const verify = function () {
+        return run('校验', async function () {
+          const result = await face.media({ action: 'verify' }, project);
+          setData(function (prev) { return Object.assign({}, prev, { verify: result }); });
+        });
+      };
+
+      const remove = function (source) {
+        if (!window.confirm('删除这个媒体来源？其证据会一起删除。')) return;
+        return run('删除', async function () {
+          await face.media({ action: 'remove', sourceId: source.id, confirm: true }, project);
+          setOpen(null);
+          await load();
+        });
+      };
+
+      const saveOcrEvidence = function (source) {
+        const text = String((open && open.ocr && (open.ocr.text || (open.ocr.pages || []).map(function (page) { return page.text || ''; }).join('\n'))) || '').trim();
+        if (!text) { setError('没有可保存的 OCR 文本。'); return; }
+        return run('存证据', async function () {
+          await face.media({
+            action: 'add_evidence',
+            sourceId: source.id,
+            kind: 'comic-page',
+            locator: { page: open.page },
+            quote: text.slice(0, 3000),
+            method: 'ocr',
+            confirm: true,
+          }, project);
+          await load();
+        });
+      };
+
+      const allSources = (data && data.sources) || [];
+      const sources = allSources.filter(function (source) { return source.kind === kind; });
+      const sourceIds = new Set(sources.map(function (source) { return source.id; }));
+      const evidence = ((data && data.evidence) || []).filter(function (row) { return sourceIds.has(row.sourceId); });
+      const verifyItems = data && data.verify ? (data.verify.items || []).filter(function (item) { return sourceIds.has(item.sourceId); }) : [];
+      const verifyCount = function (status) { return verifyItems.filter(function (item) { return item.status === status; }).length; };
+      const inputStyle = {
+        width: '100%', boxSizing: 'border-box', border: '1px solid ' + c.border, background: c.layer2,
+        color: c.text, borderRadius: 7, padding: '6px 8px', fontSize: 11, fontFamily: 'inherit', outline: 'none',
+      };
+
+      return h('div', { className: 'fic-media-page', style: { padding: '9px 10px 90px' } },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+          h('div', { style: { color: c.text, fontSize: 13.5, fontWeight: 650, flex: 1 } }, isComic ? '漫画原著' : '红果短剧'),
+          h('button', { type: 'button', className: 'fic-link', onClick: load }, '刷新'),
+          h('button', { type: 'button', className: 'fic-link', onClick: verify }, '校验'),
+        ),
+        h('div', { style: { color: c.faint, fontSize: 9.5, lineHeight: 1.55, marginTop: 4 } },
+          isComic
+            ? '本地 CBZ/ZIP、图片或文件夹；只登记来源，不复制整本、不接平台。来源 ' + sources.length + ' · 证据 ' + evidence.length
+            : '按剧名搜索元数据；登记后可看分集/弹幕，不取播放地址或内容密钥。来源 ' + sources.length + ' · 证据 ' + evidence.length),
+        isComic ? h('div', { style: { marginTop: 10 } },
+          h('div', { style: { color: c.faint, fontSize: 10, marginBottom: 4 } }, '登记本地漫画'),
+          h('div', { style: { display: 'flex', gap: 6 } },
+            h('input', { type: 'text', value: comicPath, placeholder: 'CBZ/ZIP 路径，或图片文件夹', onChange: function (e) { setComicPath(e.target.value); }, style: inputStyle }),
+          ),
+          h('div', { style: { display: 'flex', gap: 6, marginTop: 5 } },
+            h('button', {
+              type: 'button', disabled: !!busy, onClick: chooseFolder,
+              style: { border: '1px solid ' + c.border, background: c.layer2, color: c.text, borderRadius: 7, padding: '4px 8px', fontSize: 10.5, fontFamily: 'inherit', cursor: 'pointer' },
+            }, busy === '选文件夹' ? '选择中…' : '选择文件夹'),
+            h('span', { style: { flex: 1 } }),
+            h('button', {
+              type: 'button', disabled: !!busy || !comicPath.trim(), onClick: addComic,
+              style: { border: 'none', background: c.brand, color: c.onBrand, borderRadius: 7, padding: '0 12px', fontSize: 10.5, fontWeight: 600, fontFamily: 'inherit', cursor: comicPath.trim() ? 'pointer' : 'default', opacity: comicPath.trim() ? 1 : 0.45 },
+            }, busy === '登记漫画' ? '登记中…' : '登记'),
+          ),
+        ) : null,
+        !isComic ? h('div', { style: { marginTop: 10 } },
+          h('div', { style: { color: c.faint, fontSize: 10, marginBottom: 4 } }, '搜索短剧'),
+          h('div', { style: { display: 'flex', gap: 6 } },
+            h('input', {
+              type: 'text', value: hongQuery, placeholder: '输入短剧名称，如“斗罗大陆”',
+              onChange: function (e) { setHongQuery(e.target.value); },
+              onKeyDown: function (e) { if (e.key === 'Enter') searchHong(); },
+              style: inputStyle,
+            }),
+            h('button', { type: 'button', disabled: !!busy || !hongQuery.trim(), onClick: searchHong, style: { border: 'none', background: c.brand, color: c.onBrand, borderRadius: 7, padding: '0 12px', fontSize: 10.5, fontWeight: 600 } }, busy === '搜红果' ? '搜索中…' : '搜'),
+          ),
+          h('div', { style: { color: c.faint, fontSize: 9, lineHeight: 1.5, marginTop: 4 } },
+            'DSH 用剧名调用红果搜索，返回候选；你选一条登记为来源。只取元数据/分集/弹幕。'),
+          hongResults.length ? h('div', { style: { marginTop: 6, border: '1px solid ' + c.border, borderRadius: 8, overflow: 'hidden', background: c.layer2 } },
+            hongResults.slice(0, 6).map(function (item, i) {
+              return h('div', { key: 'h' + i, style: { display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', borderBottom: i === Math.min(5, hongResults.length - 1) ? 'none' : '1px solid ' + c.border } },
+                h('span', { style: { flex: 1, minWidth: 0, fontSize: 10.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, item.title || item.id),
+                h('button', { type: 'button', className: 'fic-link', onClick: function () { addHong(item); } }, '登记'));
+            })) : null,
+        ) : null,
+        h('div', { style: { marginTop: 12 } },
+          sources.length ? sources.map(function (source) {
+            const isOpen = open && open.source && open.source.id === source.id;
+            return h('div', { key: source.id, className: 'fic-media-card' },
+              h('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+                h('span', { style: { fontSize: 9.5, color: c.brand, background: c.layer, borderRadius: 4, padding: '0 4px' } }, source.kind === 'comic' ? '漫画' : '红果'),
+                h('span', { style: { flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, source.title),
+              ),
+              h('div', { style: { color: c.faint, fontSize: 9.5, marginTop: 3 } },
+                source.kind === 'comic' ? source.pageCount + ' 页 · ' + source.type : (source.seriesId || '')),
+              h('div', { style: { display: 'flex', gap: 7, marginTop: 5 } },
+                source.kind === 'comic'
+                  ? h('button', { type: 'button', className: 'fic-link', onClick: function () { openComic(source); } }, isOpen ? '收起' : '看页')
+                  : h('button', { type: 'button', className: 'fic-link', onClick: function () { openHong(source); } }, isOpen ? '收起' : '看分集'),
+                h('button', { type: 'button', className: 'fic-link', onClick: function () { remove(source); }, style: { color: c.error } }, '删除'),
+              ),
+              isOpen && source.kind === 'comic' ? h('div', { style: { marginTop: 6, paddingTop: 6, borderTop: '1px dashed ' + c.border } },
+                h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } },
+                  (open.pages || []).slice(0, 30).map(function (page) {
+                    return h('button', {
+                      key: 'p' + page.index, type: 'button',
+                      onClick: function () { readPage(source, page.index); },
+                      style: { border: '1px solid ' + (open.page === page.index ? c.brand : c.border), background: c.layer, color: c.text, borderRadius: 5, padding: '2px 5px', fontSize: 9.5, cursor: 'pointer' },
+                    }, String(page.index + 1));
+                  })),
+                open.image ? h('div', { style: { marginTop: 6, border: '1px solid ' + c.border, borderRadius: 6, overflow: 'hidden', background: c.layer, position: 'relative' } },
+                  h('img', { src: open.image, alt: '漫画页', style: { display: 'block', width: '100%', height: 'auto' } }),
+                  open.pageMeta && open.panels
+                    ? open.panels.map(function (panel, i) {
+                        return h('div', {
+                          key: 'panel-' + i,
+                          title: '第 ' + (i + 1) + ' 格',
+                          style: {
+                            position: 'absolute', pointerEvents: 'none',
+                            left: (panel.x / open.pageMeta.width * 100) + '%',
+                            top: (panel.y / open.pageMeta.height * 100) + '%',
+                            width: (panel.w / open.pageMeta.width * 100) + '%',
+                            height: (panel.h / open.pageMeta.height * 100) + '%',
+                            border: '1.5px solid ' + c.brand, boxSizing: 'border-box',
+                            background: 'rgba(120,160,255,0.06)',
+                          },
+                        });
+                      })
+                    : null)
+                  : null,
+                h('div', { style: { display: 'flex', gap: 6, marginTop: 6 } },
+                  h('button', { type: 'button', className: 'fic-link', onClick: function () { ocrPage(source, open.page); } }, 'OCR 本页'),
+                  open.ocr && (open.ocr.text || (open.ocr.pages || []).length)
+                    ? h('button', { type: 'button', className: 'fic-link', onClick: function () { saveOcrEvidence(source); } }, '存为证据')
+                    : null,
+                  h('span', { style: { color: c.faint, fontSize: 9.5 } },
+                    open.panels ? '分格 ' + open.panels.length + ' 个' : '点页码分格')),
+                open.ocr ? h('div', { style: { color: c.sub, fontSize: 10, lineHeight: 1.55, marginTop: 5, maxHeight: 160, overflow: 'auto', whiteSpace: 'pre-wrap' } },
+                  open.ocr.text
+                    ? open.ocr.text
+                    : (open.ocr.pages || []).map(function (page) { return page.text || page.error || ''; }).join('\n').slice(0, 2000))
+                  : null,
+              ) : null,
+              isOpen && source.kind === 'hongguo' ? h('div', { style: { marginTop: 6, paddingTop: 6, borderTop: '1px dashed ' + c.border, color: c.sub, fontSize: 10, lineHeight: 1.55 } },
+                (open.episodes || []).slice(0, 12).map(function (ep) {
+                  return h('button', {
+                    key: ep.id, type: 'button',
+                    onClick: function () { readDanmaku(source, ep); },
+                    style: {
+                      display: 'flex', gap: 5, width: '100%', border: 'none', background: 'transparent',
+                      color: c.sub, textAlign: 'left', fontFamily: 'inherit', cursor: 'pointer', padding: '1px 0',
+                    },
+                  },
+                    h('span', { style: { color: c.faint, minWidth: 44 } }, '第' + (ep.number || '?') + '集'),
+                    h('span', { style: { flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, ep.title || ep.id));
+                }),
+                !(open.episodes || []).length ? h('div', { style: { color: c.faint } }, '没有分集数据。') : null,
+                open.danmaku ? h('div', { style: { marginTop: 5, paddingTop: 5, borderTop: '1px dashed ' + c.border, color: c.faint, fontSize: 9.5 } },
+                  '弹幕 ' + ((open.danmaku.items || []).length) + ' 条' +
+                  ((open.danmaku.items || []).length
+                    ? '：' + (open.danmaku.items || []).slice(0, 6).map(function (d) { return d.text || d.content || ''; }).filter(Boolean).join(' / ')
+                    : ''))
+                  : null,
+              ) : null,
+            );
+          }) : h('div', { className: 'fic-media-empty', style: { color: c.faint, fontSize: 11, lineHeight: 1.6, border: '1px dashed ' + c.border, borderRadius: 10, padding: '14px 12px', textAlign: 'center' } },
+            isComic ? '还没有漫画来源。上方粘贴/选择本地文件或文件夹后登记。' : '还没有红果来源。上方输入短剧名称搜索，选中结果登记。'),
+        ),
+        data && data.verify ? h('div', { style: { marginTop: 8, border: '1px solid ' + c.border, borderRadius: 8, padding: '6px 8px', fontSize: 10, color: c.sub, lineHeight: 1.55 } },
+          '本页校验：valid ' + verifyCount('valid') + ' / stale ' + verifyCount('stale') + ' / invalid ' + verifyCount('invalid') + ' / unverified ' + verifyCount('unverified'))
+          : null,
+        error ? h('div', { style: { color: c.error, fontSize: 10.5, lineHeight: 1.5, marginTop: 8 } }, error) : null,
+      );
+    }
+
+    // 导入分析报告卡（0.4.2）：只读 canon，Markdown 文本展示。
+    function AnalysisView(props) {
+      const face = props.face;
+      const project = props.project;
+      const [action, setAction] = React.useState('overview');
+      const [state, setState] = React.useState({ loading: true, text: '', error: '' });
+      const loadSeq = React.useRef(0);
+      const load = function (next = action) {
+        const seq = ++loadSeq.current;
+        setState({ loading: true, text: '', error: '' });
+        return Promise.resolve(face.analysis({ action: next }, project))
+          .then(function (result) {
+            if (seq !== loadSeq.current) return;
+            setState({ loading: false, text: result.text || '', error: '' });
+          })
+          .catch(function (err) {
+            if (seq !== loadSeq.current) return;
+            setState({ loading: false, text: '', error: String((err && err.message) || err) });
+          });
+      };
+      const exportReport = function () {
+        if (!state.text) return;
+        const blob = new Blob([state.text], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'fanfic-analysis-' + action + '.md';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      };
+      React.useEffect(function () { load(action); }, [project, action]);
+      const items = [
+        ['overview', '总览'],
+        ['relations', '关系'],
+        ['timeline', '时间线'],
+        ['au', 'AU'],
+        ['reader', '读者'],
+      ];
+      return h('div', { style: { padding: '9px 10px 96px' } },
+        h('div', { style: { display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8, alignItems: 'center' } },
+          items.map(function (item) {
+            return h('button', {
+              key: item[0], type: 'button', onClick: function () { setAction(item[0]); },
+              style: {
+                border: '1px solid ' + (action === item[0] ? c.brand : c.border),
+                background: action === item[0] ? c.brand : c.layer2, color: action === item[0] ? c.onBrand : c.sub,
+                borderRadius: 99, padding: '3px 9px', fontSize: 10.5, fontFamily: 'inherit', cursor: 'pointer',
+                fontWeight: action === item[0] ? 600 : 400,
+              },
+            }, item[1]);
+          }),
+          h('button', { type: 'button', className: 'fic-link', onClick: function () { load(); }, style: { marginLeft: 'auto' } }, '刷新'),
+          h('button', { type: 'button', className: 'fic-link', onClick: exportReport, disabled: !state.text }, '导出'),
+        ),
+        state.loading
+          ? h('div', { className: 'fic-card', style: { color: c.faint, fontSize: 11, padding: '14px 13px' } }, '生成分析…')
+          : state.error
+            ? h('div', { style: { color: c.error, fontSize: 10.5, lineHeight: 1.55, padding: '4px 2px' } }, state.error)
+            : h('div', { className: 'fic-card', style: { padding: '12px 13px', background: c.layer2 } },
+                h('div', { style: { color: c.faint, fontSize: 9, marginBottom: 7 } }, '只读 canon · 推断/假设单独标注'),
+                h('pre', { style: {
+                  margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: c.sub,
+                  fontSize: 10.5, lineHeight: 1.72, fontFamily: 'inherit',
+                } }, state.text)),
       );
     }
 
@@ -858,6 +1911,8 @@ window.__ModuleLoader__.load({
       // ── 一级 tab（v0.2.0：总览不再是入口，改成常驻「下一步」条）───────────────
       const TAB_ITEMS = [
         { key: 'canon', label: '原著', count: book ? book.characters.length : 0 },
+        { key: 'comic', label: '漫画', count: null },
+        { key: 'hongguo', label: '红果', count: null },
         { key: 'delta', label: '本作', count: deltaData.items.length },
         { key: 'plot', label: '剧情', count: book ? book.timeline.length : 0 },
         { key: 'write', label: '写作', count: null },
@@ -878,7 +1933,9 @@ window.__ModuleLoader__.load({
               onClick: function () { setTab(item.key); },
             },
             item.label,
-            h('span', { className: 'n' }, item.key === 'write' ? (writing.chapter || 'ch—') : String(item.count || 0)),
+            item.key === 'write'
+              ? h('span', { className: 'n' }, writing.chapter || 'ch—')
+              : item.count !== null ? h('span', { className: 'n' }, String(item.count || 0)) : null,
           );
         }),
       );
@@ -1473,6 +2530,11 @@ window.__ModuleLoader__.load({
               h('option', { value: 'all' }, '全部'),
               roles.map(function (role) { return h('option', { key: role, value: role }, role); }),
             ),
+            h('button', {
+              type: 'button', className: 'fic-link',
+              onClick: function () { setSheet({ kind: 'batch' }); },
+              style: { whiteSpace: 'nowrap' },
+            }, '批量'),
           ),
           list.length
             ? h('div', { className: 'fic-people', style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginTop: 8 } },
@@ -1503,7 +2565,10 @@ window.__ModuleLoader__.load({
           },
           ch.status !== 'confirmed' ? h('span', { className: 'fic-tag warn', style: { position: 'absolute', top: 8, right: 8 } }, '待确认') : null,
           h('div', { style: { display: 'flex', gap: 8, alignItems: 'center' } },
-            avatar(ch.name, 36, ch.role),
+            h(CharacterAvatar, {
+              name: ch.name, size: 44, role: ch.role, characterId: ch.id,
+              avatarInfo: ch.avatar, face: face, project: activeProject(), showDot: true,
+            }),
             h('div', { style: { minWidth: 0, flex: 1 } },
               h('div', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
                 h('span', { style: { color: c.text, fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, ch.name),
@@ -1689,12 +2754,20 @@ window.__ModuleLoader__.load({
           h(
             'div',
             { style: { display: 'flex', gap: 11, alignItems: 'center', marginBottom: 8, paddingLeft: 8 } },
-            avatar(ch.name, 56, ch.role),
+            h(CharacterAvatar, {
+              name: ch.name, size: 64, role: ch.role, characterId: ch.id,
+              avatarInfo: ch.avatar, face: face, project: activeProject(), showDot: true,
+            }),
             h('div', { style: { minWidth: 0 } },
               h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' } },
                 h('span', { style: { color: c.text, fontSize: 16, fontWeight: 600 } }, ch.name),
                 chip(ch.role, c.brand),
                 statusChip(ch.status),
+                h('button', {
+                  type: 'button', className: 'fic-link',
+                  onClick: function () { setSheet({ kind: 'avatar', id: ch.id }); },
+                  style: { marginLeft: 'auto', whiteSpace: 'nowrap' },
+                }, '换形象'),
               ),
               h('div', { style: { color: c.faint, fontSize: 11, marginTop: 3 } },
                 '出场 ' + chapterRange(ch.firstChapter, ch.lastChapter) + ' · 提及 ' + ch.mentions + ' · 证据 ' + ch.evidenceCount),
@@ -1971,7 +3044,8 @@ window.__ModuleLoader__.load({
       function plotView() {
         const body = plotSub === 'timeline' ? timelineList()
           : plotSub === 'threads' ? threadList()
-            : eventList();
+            : plotSub === 'analysis' ? h(AnalysisView, { face: face, project: activeProject() })
+              : eventList();
         const drawn = (book.timeline || []).filter(function (t) { return t.factCount > 0; }).length;
         return h('div', { style: { padding: '9px 10px 96px' } },
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 } },
@@ -1979,6 +3053,7 @@ window.__ModuleLoader__.load({
               { key: 'timeline', label: '时间线', count: (book.timeline || []).length },
               { key: 'threads', label: '伏笔', count: (book.threads || []).length },
               { key: 'events', label: '事件', count: book.coverage.facts.total },
+              { key: 'analysis', label: '分析', count: 0 },
             ], plotSub, setPlotSub, true),
             h('span', { style: { flex: 1 } }),
             plotSub === 'timeline'
@@ -2630,7 +3705,9 @@ window.__ModuleLoader__.load({
         if (!data) {
           return h('div', { style: { padding: 14, color: c.faint, fontSize: 12 } }, '正在读取项目状态…');
         }
-        if (!book && !importOpen) return overview();
+        if (!book && !importOpen && tab !== 'comic' && tab !== 'hongguo') return overview();
+        if (tab === 'comic') return h(MediaView, { face: face, project: activeProject(), kind: 'comic' });
+        if (tab === 'hongguo') return h(MediaView, { face: face, project: activeProject(), kind: 'hongguo' });
         if (tab === 'canon') {
           if (!book) return emptyState('还没有设定数据', '先在「下一步」里导入原著；分析结果确认后，人物/势力/关系/世界/冲突会出现在这里。');
           const inner = sub === 'characters' ? characterGrid()
@@ -2698,6 +3775,25 @@ window.__ModuleLoader__.load({
         } else if (sheet.kind === 'faction') {
           const f = (book.factions || []).find(function (x) { return x.id === sheet.id; });
           sheetNode = f ? factionSheet(f) : null;
+        } else if (sheet.kind === 'avatar') {
+          const ch = (book.characters || []).find(function (x) { return x.id === sheet.id; });
+          sheetNode = ch ? h(AvatarSheet, {
+            character: ch,
+            face: face,
+            project: activeProject(),
+            projectTitle: book.title || '',
+            onClose: function () { setSheet(null); },
+            onChanged: refresh,
+          }) : null;
+        } else if (sheet.kind === 'batch') {
+          sheetNode = h(BatchAvatarSheet, {
+            characters: book.characters || [],
+            projectTitle: book.title || '',
+            face: face,
+            project: activeProject(),
+            onClose: function () { setSheet(null); },
+            onChanged: refresh,
+          });
         } else if (sheet.kind === 'edge') {
           const e = (book.matrix.edges || []).find(function (x) { return x.id === sheet.id; });
           sheetNode = e ? edgeSheet(e) : null;
@@ -2853,6 +3949,18 @@ window.__ModuleLoader__.load({
                     return {
                       load: function (project) {
                         return callRemote('getPanel', { project: project || null });
+                      },
+                      getAvatar: function (characterId, project) {
+                        return callRemote('getAvatar', { characterId: characterId, project: project || null });
+                      },
+                      avatar: function (request, project) {
+                        return callRemote('avatar', Object.assign({}, request || {}, { project: project || null }));
+                      },
+                      media: function (request, project) {
+                        return callRemote('media', Object.assign({}, request || {}, { project: project || null }));
+                      },
+                      analysis: function (request, project) {
+                        return callRemote('analysis', Object.assign({}, request || {}, { project: project || null }));
                       },
                       projects: function () {
                         return callRemote('listProjects', {});

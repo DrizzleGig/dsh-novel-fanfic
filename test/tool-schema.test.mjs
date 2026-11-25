@@ -22,9 +22,9 @@ function definitions() {
   });
 }
 
-test('六个 fic 工具的参数都是宿主可接受的 JSON Schema', () => {
+test('八个 fic 工具的参数都是宿主可接受的 JSON Schema', () => {
   const tools = definitions();
-  assert.equal(tools.length, 6);
+  assert.equal(tools.length, 8);
   for (const definition of tools) {
     assertParameterSchema(definition.name, definition.parameters);
   }

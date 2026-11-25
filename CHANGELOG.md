@@ -1,5 +1,73 @@
 # CHANGELOG
 
+## 0.4.2 — 2026-11-26
+
+### 已知问题（P2/P3，发布后下个补丁处理）
+
+- `media.json` / `avatars.json` 仍无跨进程锁；同一本书必须按 `COEXIST.md` 的单写流程使用，同进程并发写可能 last-writer-wins。
+- 红果 WASM 的返回字段未做独立运行时 schema 校验；只信任 vendored 库，方法白名单仍限制为四个只读方法。
+- 分格默认按“上→下、左→右”排列；竖排右→左/跨页漫画的 OCR 文本顺序可能错误。
+- 真实 DSH 宿主截图、真实商业漫画页金标尚未跑；0.6.0 游戏解包不属于本版。
+
+### 新增：`fic_analyze`
+
+- `lib/analysis.mjs`：从已确认 canon 生成可回查 Markdown：`overview`（总览/覆盖）、`relations`（称呼/关系）、`timeline`（事件/伏笔）、`au`（本作改动影响面）、`reader`（读者假设）。pending 不算事实；推断/假设单独标注；分析视图用完整 canon（不按侧栏截断）。
+- 第 8 个工具 `fic_analyze`；OOC 逐句检查仍走 `fic_check`，不重复造检查器。
+- `test/analysis.test.mjs` 6 例；全量 231/231。
+- 客户端「剧情 → 分析」视图：总览/关系/时间线/AU/读者五类报告卡；只读 canon；支持导出 Markdown；全量 231/231。
+- 尚未做：分析报告导出/证据跳转、真实项目报告验收；AU 仅按人物名/别名确定性匹配。
+
+## 0.4.1 — 2026-11-26
+
+### 新增：红果短剧只读元数据
+
+- vendored `openhongguo@0.4.1` WASM（Apache-2.0 + GO_LICENSE，`lib/vendor/openhongguo/`，约 5.26MB）；不依赖外部项目/CLI。
+- `lib/hongguo.mjs`：只暴露 `search/getSeries/listEpisodes/listDanmaku`，**不暴露 `resolvePlayback`**，不取播放地址/内容密钥；设备档案放内存。
+- `fic_source` 新增 `hongguo_search / hongguo_series / hongguo_episodes / hongguo_danmaku` 四个只读 action。
+- `test/hongguo.test.mjs` 2 例（白名单/缺方法）；全量 201/201。
+- 许可：`lib/vendor/manifest.json`、`THIRD_PARTY_NOTICES.md`、`scripts/check-licenses.mjs`；`npm run check:licenses` 通过（1 包/5 文件）。
+- 真实实测：搜索“斗罗大陆”返回 6 条；某剧 53 集；首集 `第1集`；弹幕页可读（本集 0 条）。
+- 尚未做：红果 UI/证据落盘、用户录屏抽帧、本地漫画读取。
+
+### 新增：本地漫画 + Windows 内置 OCR
+
+- `lib/windows-ocr.mjs` + `scripts/win-ocr.ps1`：调用 `Windows.Media.Ocr`，不装外部 OCR；真实中文截图 OCR 964 字通过。
+- `lib/comic.mjs`：CBZ/ZIP（stored/deflate）解析、图片目录/单图、自然序、跳过非图片/路径穿越/加密/ZIP64；只对选中页 OCR，临时文件在系统 temp，完成后删除；单次 ≤30 页/30,000 字。
+- `lib/image-gray.mjs` + `scripts/image-gray.ps1`：Windows 内置 System.Drawing 缩放读灰度；`lib/panel-detect.mjs` 纯 JS 投影分格；`comic_panels` 返回原图坐标。
+- `lib/image-crop.mjs` + `scripts/image-crop.ps1`：Windows 内置裁剪；`ocrComicPanels` 先分格、逐格 OCR、按面板顺序拼文本；`comic_ocr` 增 `split:true`。
+- `test/comic.test.mjs` 6 例、`test/windows-ocr.test.mjs` 3 例、`test/image-gray.test.mjs` 2 例、`test/panel-detect.test.mjs` 3 例、`test/image-crop.test.mjs` 2 例；金标合成漫画页（800×1200、2 格）整页 OCR + 分格 OCR 顺序通过；全量 231/231。
+- `fic_source` 新增 `comic_list` / `comic_panels` / `comic_ocr` 三个只读 action。
+- 尚未做：漫画 UI/证据落盘、PDF、红果 UI/证据、用户录屏抽帧。
+
+### 新增：媒体来源/证据账本
+
+- `lib/media.mjs`：项目 `media.json`，登记漫画/红果来源与最小证据；来源文件只存外部路径+hash，不复制整本/整集；不存播放地址/内容密钥。
+- `mediaRevision` 独立于 `project.json.revision`；`fic_source` 新增 `media_list/media_add_comic/media_add_hongguo/media_add_evidence/media_remove`。
+- `test/media.test.mjs` 3 例；全量 222/222。
+- 尚未做：媒体证据 UI/verifier、分格/OCR 结果自动入证据、真实项目验收。
+
+### 新增：媒体证据 verifier
+
+- `verifyMediaEvidence`：漫画来源重算文件 hash、校验页码/格号；改文件/删文件标 stale；红果无本地源标 unverified；坏集号 invalid。
+- `fic_source` 新增 `media_verify` 只读 action。
+- `test/media.test.mjs` 增至 4 例；全量 223/223。
+- 客户端新增一级导航「原著 / 漫画 / 红果 / 本作 / 剧情 / 写作」：漫画/红果独立成页，人物/势力/关系等仍是原著下位 chips；漫画支持粘贴路径 + 原生文件夹选择；红果按短剧名称搜索候选后登记；页面预览 + 分格框叠加 + 分集/弹幕 + 分析导出。尚未在真实宿主点测；全量 231/231。
+
+## 0.4.0 — 2026-11-26
+
+### 新增：人物形象资产存储层
+
+- `lib/avatars.mjs`：`avatars.json` + `assets/avatars/` 的读写、哈希、魔数/尺寸/大小校验、原子写、`assetRevision`、`resolveAvatar`/`removeAvatar`/`avatarSummary`。
+- 头像变更只 bump `avatars.json.assetRevision`，不 bump `project.json.revision`；图片不进 canon、不进契约。
+- `test/avatars.test.mjs` 7 例：写入/解析/替换/删除/stale/坏图/路径穿越/越界 file/缺项目。
+- `lib/avatar-sources.mjs`：Bangumi / AniList / Kitsu 作品与角色适配，Bing / 百度网页图解析；`searchWorks` 聚合、`listCharacters`、`searchWebImages`、`matchCharacters`；测试注入 fetch，不联网。
+- `test/avatar-sources.test.mjs` 8 例；`novelFanficPanel` 增 `getAvatar`/`avatar` 两个 remote（14 方法），`avatar` 支持 `status/search_works/list_characters/match/web_search/fetch_image/set/remove`；set/remove 强制 `confirm:true`。
+- `lib/avatar-fetch.mjs`：图片下载 allowlist/redirect:error/类型/大小/魔数校验；`test/avatar-fetch.test.mjs` 3 例。
+- 新增第 7 个工具 `fic_avatar`（同 action 集合；模型可查/列/匹配/取图，写仍需作者 confirm；不返回二进制）。
+- 客户端首版：`CharacterAvatar` 懒加载已确认头像并回退字母块；人物卡 44px、详情 64px；`AvatarSheet` 支持网页搜图（百度/Bing）、官方匹配（作品 → 角色 → 匹配 → 取图）、上传本地图居中裁 256×256、删除本地形象；`BatchAvatarSheet` 支持项目级作品搜索 → 全角色 high/medium 候选 → 逐项勾选 → 批量取图/裁剪/保存。真实宿主截图未做。
+- `test/avatar-batch.test.mjs`：20 角色、18 确认（90%）、2 回退、匹配不串人。全量 225/225。
+- 真实来源补测：Bangumi `3425` 火影忍者 241 角色/237 有图，抓取前 20 张官方 jpeg（98×300～450×600）；居中裁剪 → `setAvatar` 20/20 confirmed、`resolveAvatar` 20/20、assetRevision 20；文件在 tmp，未进仓库/npm。全量 231/231（含 0.4.1/0.4.2 的 32 例）。
+
 ## 0.2.3 — 2026-11-22
 
 ### 修复：面板读取会往对话里写「fic」命令行

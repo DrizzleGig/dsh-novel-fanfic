@@ -1,6 +1,6 @@
 {
   "name": "dsh-novel-fanfic",
-  "version": "0.2.3",
+  "version": "0.4.2",
   "description": "把原著导入，就能拥有一套专属的同人创作资料库。人物关系、剧情经历、世界规则，随时查阅；你想改写的人物命运、关系和剧情，也能按本作设定记录下来。写作时帮你理清人物知情、时间线和场景细节，写完还能检查人物 OOC、设定冲突和剧情前后矛盾。原著只是参考，你的故事由你决定。",
   "type": "module",
   "exports": {
@@ -29,7 +29,8 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check index.js && node --check client.js && node --check lib/service.mjs && node --check lib/canon-store.mjs && node --check lib/exports.mjs && node --check lib/mission.mjs && node --check lib/checker.mjs && node --check lib/compiler.mjs && node --check lib/canon-adapter.mjs && node --check lib/ingest.mjs && node --check lib/tool-schema.mjs && node --check lib/remote.js && node --check lib/remote-contract.js",
+    "check": "node --check index.js && node --check client.js && node --check lib/service.mjs && node --check lib/canon-store.mjs && node --check lib/project-name.mjs && node --check lib/avatars.mjs && node --check lib/avatar-sources.mjs && node --check lib/avatar-fetch.mjs && node --check lib/hongguo.mjs && node --check lib/windows-ocr.mjs && node --check lib/comic.mjs && node --check lib/image-gray.mjs && node --check lib/image-crop.mjs && node --check lib/panel-detect.mjs && node --check lib/analysis.mjs && node --check lib/media.mjs && node --check lib/exports.mjs && node --check lib/mission.mjs && node --check lib/checker.mjs && node --check lib/compiler.mjs && node --check lib/canon-adapter.mjs && node --check lib/ingest.mjs && node --check lib/tool-schema.mjs && node --check lib/remote.js && node --check lib/remote-contract.js && node scripts/check-licenses.mjs",
+    "check:licenses": "node scripts/check-licenses.mjs",
     "eval": "node scripts/fanfic-eval.mjs",
     "eval:verify": "node scripts/fanfic-eval.mjs verify",
     "eval:check": "node scripts/fanfic-eval.mjs check",
@@ -51,6 +52,7 @@
     "icon.svg",
     "CHANGELOG.md",
     "README.md",
+    "THIRD_PARTY_NOTICES.md",
     "LICENSE"
   ],
   "keywords": [
