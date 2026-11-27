@@ -14,7 +14,7 @@ import { loadProject, chapterBody, saveCanon, paths } from '../lib/canon-store.m
 import { applyProposals, confirmEntries } from '../lib/proposals.mjs';
 import { loadProjectCanon } from '../lib/canon-adapter.mjs';
 import { compileContract } from '../lib/compiler.mjs';
-import { saveMission, loadMission, clearMission, normalizeMission, MISSION_BEATS_LIMIT } from '../lib/mission.mjs';
+import { saveMission, loadMission, clearMission, normalizeMission, missionDir, missionFile, assertSafeChapter, MISSION_BEATS_LIMIT } from '../lib/mission.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '..', '..');
@@ -46,6 +46,17 @@ async function contractOf(chapter) {
   const scene = loaded.canon.scenes.find((row) => row.chapter === chapter);
   return compileContract(scene, loaded.canon);
 }
+
+test('任务卡章号/项目名拒绝路径穿越与保留名', async () => {
+  assert.equal(assertSafeChapter('ch006'), 'ch006');
+  assert.equal(assertSafeChapter('第6章'), '第6章');
+  for (const bad of ['../evil', '..', '.', 'a/b', 'a\\b', 'C:', 'ch006.', 'CON', 'nul.txt', 'a\u0000b']) {
+    assert.throws(() => assertSafeChapter(bad), /chapter/);
+  }
+  assert.throws(() => missionFile(root, '../outside', 'ch006'), /project/);
+  assert.throws(() => missionFile(root, project, '../../outside'), /chapter/);
+  await assert.rejects(saveMission(root, project, '../escaped', { goal: 'x' }), /chapter/);
+});
 
 test('没有任务卡时，契约里没有任务卡元数据行（v0.1 输出不变）', async () => {
   const compiled = await contractOf('ch002');
