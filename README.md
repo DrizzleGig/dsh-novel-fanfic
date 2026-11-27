@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/DrizzleGig/dsh-novel-fanfic/blob/main/LICENSE)
 [![stars](https://img.shields.io/github/stars/DrizzleGig/dsh-novel-fanfic)](https://github.com/DrizzleGig/dsh-novel-fanfic/stargazers)
 
-## 本版本（v0.4.3，2026-11-26）
+## 本版本（v0.4.4，2026-11-27）
 
 > 0.2.x / v0.1 段落保留为历史；当前能力以本节和 CHANGELOG 为准。
 
@@ -265,7 +265,7 @@ Canon 是原著事实；Fic Canon 是「这一版同人正式生效的设定」�
 | 插件列表名 | 同人 |
 | 面板名 | 同人工作室 |
 | 包名 | `dsh-novel-fanfic` |
-| 版本 | v0.4.3 |
+| 版本 | v0.4.4 |
 | 运行环境 | Node.js ≥ 20 |
 | 外部依赖 | 零运行时依赖；红果 WASM 已 vendored |
 | 输入格式 | 原著 TXT / Markdown（UTF-8 / GB18030，≤20 MB）；漫画 CBZ/ZIP/图片；红果按名称搜索 |
