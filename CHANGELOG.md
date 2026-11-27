@@ -6,7 +6,8 @@
 
 - `lib/mission.mjs` 的 `project`/`chapter` 不再直接拼路径：project 复用 `assertSafeProject`，chapter 新增 `assertSafeChapter`，拒绝分隔符、点段、盘符、ADS、Windows 保留名；`missionDir` 用 `projectDirSafe` 做包含性校验，`missionFile` 再校验目标仍在 `chapters/` 内。
 - 影响 `fic_plan` 的 get/set/clear 及所有调用 `missionFile` 的入口；合法 chNNN/中文章 id 保持兼容。
-- 新增路径穿越负例；`npm test` 232/232。
+- `projectDirSafe`/`canon-store.paths` 增加 junction/symlink 检查，canon/media/avatars/任务卡共用；新增 junction 负例。
+- 新增路径穿越负例；`npm test` 233/233。
 
 ## 0.4.3 — 2026-11-26
 
